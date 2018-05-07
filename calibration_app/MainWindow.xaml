@@ -3,10 +3,41 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:local="clr-namespace:calibration_app"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="旗云数据校准程序Beta" Height="450" Width="800" Loaded="Window_Loaded">
     <Grid>
-        
+        <DockPanel>
+            <!--停靠布局，让菜单栏和工具栏位于窗口顶部-->
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="文件">
+                    <!--菜单项为MenuItem，文字使用属性 Header-->
+                    <MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>
+                    <MenuItem Header="导入数据" Name="ImportDataMenu" Click="ImportDataMenu_Click"></MenuItem>
+                    <MenuItem Header="关闭" Name="CloseWindowMenu" Click="CloseWindowMenu_Click"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="选项">
+                    <MenuItem Header="设置" Name="SettingMenu" Click="SettingMenu_Click"></MenuItem>
+                </MenuItem>
+                <!--<MenuItem Header="View"></MenuItem>-->
+                <!--<MenuItem Header="About"></MenuItem>-->
+            </Menu>
+            <ToolBar DockPanel.Dock="Top">
+                <!--ToolBar和StatusBar就是一个容器-->
+                <CheckBox Name="GatherCB" Content="开始采集" Click="GatherCB_Click" >
+                </CheckBox>
+                <Button Name="ImprotBtn" Content="导入数据">
+                </Button>
+                <Button Name="exportBtn" Content="导出图表">
+                </Button>
+                <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click" VerticalAlignment="Stretch"/>
+            </ToolBar>
+            <lvc:CartesianChart Series="{Binding SeriesCollection}" />
+            <!--<TextBox Height="346" Text="This is my space" DockPanel.Dock="Top" />-->
+            <!--<StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Top" >
+                <TextBlock Text="statusBar"></TextBlock>
+            </StatusBar>-->
+        </DockPanel>
     </Grid>
 </Window>
