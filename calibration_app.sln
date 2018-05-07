@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2043
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "calibration_app", "calibration_app\calibration_app.csproj", "{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0FFF1749-4F8B-4C3A-9699-5515947E0D7F}
+	EndGlobalSection
+EndGlobal
