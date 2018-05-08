@@ -27,13 +27,24 @@
                 <!--ToolBar和StatusBar就是一个容器-->
                 <CheckBox Name="GatherCB" Content="开始采集" Click="GatherCB_Click" >
                 </CheckBox>
-                <Button Name="ImprotBtn" Content="导入数据">
-                </Button>
+                <Menu>
+                    <MenuItem Header="导入数据" >
+                        <MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>
+                        <MenuItem Header="导入源数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
+                    </MenuItem>
+                </Menu>
                 <Button Name="exportBtn" Content="导出图表">
                 </Button>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click" VerticalAlignment="Stretch"/>
             </ToolBar>
-            <lvc:CartesianChart Series="{Binding SeriesCollection}" />
+            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" >
+                <lvc:CartesianChart.AxisY>
+                    <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter}"></lvc:Axis>
+                </lvc:CartesianChart.AxisY>
+                <lvc:CartesianChart.AxisX>
+                    <lvc:Axis Title="Month" Labels="{Binding Labels}"></lvc:Axis>
+                </lvc:CartesianChart.AxisX>
+            </lvc:CartesianChart>
             <!--<TextBox Height="346" Text="This is my space" DockPanel.Dock="Top" />-->
             <!--<StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Top" >
                 <TextBlock Text="statusBar"></TextBlock>

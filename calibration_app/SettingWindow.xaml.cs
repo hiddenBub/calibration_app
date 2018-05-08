@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,8 +23,22 @@ namespace calibration_app
         public SettingWindow()
         {
             InitializeComponent();
+            ArrayList dataList = new ArrayList();
+            GatherSetting GHI = new GatherSetting("GHI", "byte", 1, "sum");
+            GatherSetting GTI = new GatherSetting("GTI");
+            dataList.Add(GHI);
+            dataList.Add(GTI);
+            GridGather.ItemsSource = dataList;
         }
 
+        
 
+        
+
+        //public string[] DataType { get => dataType; }
+
+        //public string[] DataName { get => dataName; set => dataName = value; }
     }
+
+   
 }
