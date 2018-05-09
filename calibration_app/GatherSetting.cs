@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace calibration_app
 {
-    public class GatherSetting
+    public class GatherSetting : Setting
     {
         private string name;
         public string Name { get => name; set => name = value; }
@@ -82,15 +82,15 @@ namespace calibration_app
         {
             Name = name;
             Type = type;
-            Frequency = 5;
-            Method = "sum";
+            Frequency = 60;
+            Method = "avg";
         }
         public GatherSetting(string name)
         {
             Name = name;
-            Type = "short";
-            Frequency = 5;
-            Method = "sum";
+            Type = "double";
+            Frequency = 60;
+            Method = "avg";
         }
 
         static GatherSetting()

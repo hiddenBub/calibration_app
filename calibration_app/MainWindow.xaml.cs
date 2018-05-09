@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+
 using LiveCharts;
 using LiveCharts.Wpf;
 
@@ -22,6 +24,7 @@ namespace calibration_app
     /// </summary>
     public partial class MainWindow : Window
     {
+
         private bool isGather = false;
 
         private SeriesCollection series;
@@ -53,9 +56,10 @@ namespace calibration_app
         }
 
 
-
         public MainWindow()
         {
+            
+            
             InitializeComponent();
             SeriesCollection = new SeriesCollection
             {
@@ -121,24 +125,24 @@ namespace calibration_app
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void GatherMenu_Click(object sender, RoutedEventArgs e)
-        {
-            bool state = IsGather;
-            // 没有开始采集时开始采集，并将说明文字更改为结束采集
-            SwitchGather(state);
-        }
+        //private void GatherMenu_Click(object sender, RoutedEventArgs e)
+        //{
+        //    bool state = IsGather;
+        //    // 没有开始采集时开始采集，并将说明文字更改为结束采集
+        //    SwitchGather(state);
+        //}
 
         /// <summary>
         /// 工具栏采集状态切换
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void GatherCB_Click(object sender, RoutedEventArgs e)
-        {
-            bool state = IsGather;
-            // 没有开始采集时开始采集，并将说明文字更改为结束采集
-            SwitchGather(state);
-        }
+        //private void GatherCB_Click(object sender, RoutedEventArgs e)
+        //{
+        //    bool state = IsGather;
+        //    // 没有开始采集时开始采集，并将说明文字更改为结束采集
+        //    SwitchGather(state);
+        //}
 
         private void CloseWindowMenu_Click(object sender, RoutedEventArgs e)
         {
@@ -163,7 +167,10 @@ namespace calibration_app
             window.ShowDialog();
         }
 
+        private void USBBtn_Click(object sender,RoutedEventArgs e)
+        {
 
+        }
 
 
 
@@ -171,18 +178,18 @@ namespace calibration_app
         /// 切换采集开关
         /// </summary>
         /// <param name="state">当前是否在采集中</param>
-        public void SwitchGather(bool state)
-        {
-            if (!state)
-            {
-                GatherCB.Content = GatherMenu.Header = "结束采集";
-            }
-            else
-            {
-                GatherCB.Content = GatherMenu.Header = "开始采集";
-            }
-            IsGather = !state;
-        }
+        //public void SwitchGather(bool state)
+        //{
+        //    if (!state)
+        //    {
+        //        GatherCB.Content = GatherMenu.Header = "结束采集";
+        //    }
+        //    else
+        //    {
+        //        GatherCB.Content = GatherMenu.Header = "开始采集";
+        //    }
+        //    IsGather = !state;
+        //}
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {

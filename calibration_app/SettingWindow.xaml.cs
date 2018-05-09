@@ -12,6 +12,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using LibUsbDotNet;
+using LibUsbDotNet.Main;
+using LibUsbDotNet.Info;
+using LibUsbDotNet.Descriptors;
+using LibUsbDotNet.LibUsb;
+using LibUsbDotNet.WinUsb;
 
 namespace calibration_app
 {
