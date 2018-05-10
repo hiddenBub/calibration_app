@@ -31,7 +31,25 @@
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="采集设置" Margin="5,0,0,0" Grid.Column="1">
-
+                <StackPanel HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="校准原数据存储位置："></TextBlock>
+                        <Button Name="SelectFileBtn" Content="选择文件..." Click="SelectFileBtn_Click"></Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="采集数据类型："></TextBlock>
+                        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
+                                <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:GatherSetting.DataType}"  
+                                        SelectedItemBinding="{Binding Type,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
+                                <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:GatherSetting.CalculateMethod}"  
+                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </StackPanel>
             </GroupBox>
         </Grid>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">

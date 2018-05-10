@@ -8,42 +8,29 @@ using System.IO;
 
 namespace calibration_app
 {
-    public class Setting
+    public static class Setting
     {
-        private static readonly string filePath = "/setting.xml";
+        private const string filePath = "/setting.xml";
 
-        public static string FilePath => filePath;
+        
+        private static List<object> gather;
+        public static List<object> Gather { get => gather; set => gather = value; }
+
+        private static List<object> project;
+
+        public static List<object> Project { get => project; set => project = value; }
 
         public static bool IsFirst()
         {
-            bool isFirst = File.Exists(FilePath);
+            bool isFirst = File.Exists(filePath);
             return (!isFirst);
         }
-        public static string ReadNodeFromXML(string filePath, string nodeName)
-        {
-            string result = "error";
-            try
-            {
-                 //判断文件是否存在
-                if (File.Exists(filePath) && nodeName != "")
-                {
-                    XmlDocument xmlDoc = new XmlDocument();//新建XML文件
-                    xmlDoc.Load(filePath);//加载XML文件
- 
-                    XmlNode xm = xmlDoc.GetElementsByTagName(nodeName)[0];
-                    result = xm.InnerText;
 
-                }
-                else
-                {
-                    result = "error";
-                }
-            }
-            catch
-            {
-                result = "error";
-            }
-            return result;
+        static Setting ()
+        {
+            XmlToEntityList
         }
+        
+
     }
 }

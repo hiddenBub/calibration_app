@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace calibration_app
 {
@@ -97,6 +98,15 @@ namespace calibration_app
         {
             
         }
+
+
+        #region 属性更改通知
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void Changed(string PropertyName)
+        {
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(PropertyName));
+        }
+        #endregion
 
     }
 }
