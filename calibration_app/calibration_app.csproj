@@ -89,14 +89,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="GatherSetting.cs" />
+    <Compile Include="SetOption\ColumnSetting.cs" />
+    <Compile Include="SetOption\GatherSetting.cs" />
     <Compile Include="lib\XmlHelper.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSetting.cs" />
     <Compile Include="ReadPolling.cs" />
-    <Compile Include="Setting.cs" />
+    <Compile Include="SetOption\ProjectSetting.cs" />
+    <Compile Include="SetOption\Setting.cs" />
     <Compile Include="SettingWindow.xaml.cs">
       <DependentUpon>SettingWindow.xaml</DependentUpon>
     </Compile>
@@ -179,7 +181,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="setting\" />
+    <Resource Include="Setting.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

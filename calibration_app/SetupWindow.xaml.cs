@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using calibration_app.SetOption;
 
 namespace calibration_app
 {
@@ -23,11 +24,12 @@ namespace calibration_app
     public partial class SetupWindow : Window
     {
         public string EditingId { get; set; }
-        public ObservableCollection<Setting> GatherList { get; set; }   //动态数组
+        ObservableCollection<ColumnSetting> ColumnList { get; set; }   //动态数组
         public SetupWindow()
         {
             InitializeComponent();
-            GatherList = new ObservableCollection<Setting>("gather");
+           
+            ColumnList = new ObservableCollection<ColumnSetting>();
             this.DataContext = this;
             GridGather.Focus();
         }

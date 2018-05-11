@@ -39,14 +39,14 @@
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <TextBlock Text="采集数据类型："></TextBlock>
                         <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
-                            <DataGrid.Columns>
+                            <!--<DataGrid.Columns>
                                 <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
                                 <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:GatherSetting.DataType}"  
                                         SelectedItemBinding="{Binding Type,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                                 <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
                                 <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:GatherSetting.CalculateMethod}"  
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
-                            </DataGrid.Columns>
+                            </DataGrid.Columns>-->
                         </DataGrid>
                     </StackPanel>
                 </StackPanel>

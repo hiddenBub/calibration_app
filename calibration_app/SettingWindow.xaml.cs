@@ -18,6 +18,7 @@ using LibUsbDotNet.Info;
 using LibUsbDotNet.Descriptors;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.WinUsb;
+using calibration_app.SetOption;
 
 namespace calibration_app
 {
@@ -30,8 +31,8 @@ namespace calibration_app
         {
             InitializeComponent();
             ArrayList dataList = new ArrayList();
-            GatherSetting GHI = new GatherSetting("GHI", "byte", 1, "sum");
-            GatherSetting GTI = new GatherSetting("GTI");
+            ColumnSetting GHI = new ColumnSetting("GHI", "byte", 1, "sum");
+            ColumnSetting GTI = new ColumnSetting("GTI");
             dataList.Add(GHI);
             dataList.Add(GTI);
             GridGather.ItemsSource = dataList;
