@@ -89,16 +89,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="lib\ExDataGrid.cs" />
+    <Compile Include="lib\IEntitySerialization.cs" />
+    <Compile Include="lib\XmlHelper.cs" />
     <Compile Include="SetOption\ColumnSetting.cs" />
     <Compile Include="SetOption\GatherSetting.cs" />
-    <Compile Include="lib\XmlHelper.cs" />
+    <Compile Include="lib\XmlHelper.back.cs" />
     <Compile Include="LoginWindow.xaml.cs">
       <DependentUpon>LoginWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ProjectSetting.cs" />
     <Compile Include="ReadPolling.cs" />
     <Compile Include="SetOption\ProjectSetting.cs" />
     <Compile Include="SetOption\Setting.cs" />
+    <Compile Include="SetOption\XmlHelper.cs" />
     <Compile Include="SettingWindow.xaml.cs">
       <DependentUpon>SettingWindow.xaml</DependentUpon>
     </Compile>

@@ -16,7 +16,7 @@
 
     </DataPath>
     <ColumnList>
-      <Column>
+      <Column name="">
         <Name type="string">
           GHI
         </Name>

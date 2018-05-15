@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:calibration_app"
+        xmlns:local="clr-namespace:calibration_app.SetOption"
         mc:Ignorable="d"
         Title="配置项目" Height="450" Width="800">
     <Grid>
@@ -38,15 +38,15 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="5">
                         <TextBlock Text="采集数据类型："></TextBlock>
-                        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
-                            <!--<DataGrid.Columns>
+                        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true" PreviewKeyDown="GridGather_PreviewKeyDown" LoadingRow="GridGather_LoadingRow" InitializingNewItem="GridGather_InitializingNewItem" Loaded="GridGather_Loaded">
+                            <DataGrid.Columns>
                                 <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
-                                <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:GatherSetting.DataType}"  
+                                <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:ColumnSetting.DataType}"  
                                         SelectedItemBinding="{Binding Type,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                                 <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
-                                <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:GatherSetting.CalculateMethod}"  
+                                <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:ColumnSetting.CalculateMethod}"  
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
-                            </DataGrid.Columns>-->
+                            </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
                 </StackPanel>
