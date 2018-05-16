@@ -22,19 +22,23 @@ namespace calibration_app
             if ((dialogResult.HasValue == true) &&
                 (dialogResult.Value == true))
             {
-                
-                    //MessageBox.Show("第一次启动");
-                    // 设置关闭
+                bool isfirst =  ProjectSetting.IsFirst();
+                if (isfirst)
+                {
                     SetupWindow setup = new SetupWindow();
                     bool? res = setup.ShowDialog();
                     if ((res != true) ||
-                    (res != true))
+                        (res != true))
                     {
                         this.Shutdown();
                     }
+                }
+                //MessageBox.Show("第一次启动");
+                // 设置关闭
                 
-                    base.OnStartup(e);
-                    Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                
+                base.OnStartup(e);
+                Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 
                 
             }

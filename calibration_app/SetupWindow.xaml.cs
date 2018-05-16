@@ -27,6 +27,10 @@ namespace calibration_app
         public string EditingId { get; set; }
         public string FileName { get; set; }
         ObservableCollection<Column> ColumnList { get; set; }   //动态数组
+
+        /// <summary>
+        ///  程序主代码区
+        /// </summary>
         public SetupWindow()
         {
             InitializeComponent();
@@ -37,9 +41,15 @@ namespace calibration_app
             GridGather.ItemsSource = ColumnList;
             GridGather.Focus();
         }
+
+        /// <summary>
+        /// 确认按钮执行方法
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ConfirmBtn_Click(object sender, RoutedEventArgs e)
         {
-            
+            // 项目设置
             Project project = new Project
             {
                 Name = TbProName.Text,
@@ -47,48 +57,52 @@ namespace calibration_app
                 Lat = Convert.ToDouble(TbProLat.Text),
             };
             
-            //Column column= new Column
-            //{
-            //    Name = "GHI",
-            //    Type = "double",
-            //    Frequency = 60,
-            //    Method = "avg",
-            //};
-
-           
+            // 采集设置
             Gather gather = new Gather
             {
                 DataPath = FileName,
                 ColumnList = ColumnList,
             };
            
+            // 设置总结点
             Setting setting = new Setting
             {
                 Gather = gather,
                 Project = project
             };
 
-            MessageBox.Show(setting.Project.Lng.ToString());
-            //if (typeof(project.Parent).IsAssignableFrom(project.GetType()))
-            //{
-            //   
-            //}
-            //else
-            //{
-            //    MessageBox.Show("no");
-            //}
 
+            // 将设置保存到setting.xml文件
+            SerializeToXml<Setting>("./setting.xml", setting);
 
-            SerializeToXml<Setting>("setting.xml", setting);
-
-            //this.DialogResult = true;
-            //this.Close();
-        }
-
-        private void CancelBtn_Click(object sender, RoutedEventArgs e)
-        {
+            // 操作完成后设置返回数据并关闭窗口
+            this.DialogResult = true;
             this.Close();
         }
+
+        /// <summary>
+        /// 取消按钮程序代码
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CancelBtn_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        /// <summary>
+        /// 窗口关闭代码段
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+
 
         //private void ControlDat_Click(object sender, RoutedEventArgs e)
         //{
@@ -103,7 +117,7 @@ namespace calibration_app
         //        // 第五行开始是数据行
         //        if (i >= 5)
         //        {
-                    
+
         //            int index = i % range;
         //            // 定义数据容量即dat文件中每行作为索引的数据长度
         //            int indexSize = 2;
@@ -112,13 +126,21 @@ namespace calibration_app
 
         //        }
         //    }
-            
+
         //}
 
+            /// <summary>
+            /// 选择数据文件按钮程序代码段
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
         private void SelectFileBtn_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            
+
+            OpenFileDialog ofd = new OpenFileDialog
+            {
+                Filter = "数据文件|*.dat"
+            };
             if (ofd.ShowDialog() == true)
             {
                 string FileName = ofd.FileName;
@@ -220,18 +242,37 @@ namespace calibration_app
             {
                 Int32 Row = GridGather.Items.IndexOf(GridGather.CurrentItem);
                 Int32 Col = GridGather.Columns.IndexOf(GridGather.CurrentColumn);
-                for (int i = 0; i < ColumnList.Count; i++)//不用for会报错 
+                int i = 0;
+                int j = 0;
+                foreach (Column tq in ColumnList)  //删除选中行
                 {
-                    foreach (Column tq in ColumnList)  //删除选中行
-                    {
                         //MessageBox.Show(tq.Index.ToString());
-
-                        ColumnList.RemoveAt(Row);
-                        break;
+                    if (i == Row)
+                    {
+                        j = 0;
+                        foreach (System.Reflection.PropertyInfo p in tq.GetType().GetProperties())
+                        {
+                            if (j == Col)
+                            {
+                                
+                                if (p.Name != "Index")
+                                {
+                                    p.SetValue(tq, null);
+                                    uie.MoveFocus(new TraversalRequest(FocusNavigationDirection.Previous));
+                                }
+                                
+                            }
+                            j++;
+                        }
                     }
-
-
+                        
+                    i++;
+                        //ColumnList.RemoveAt(Row);
+                        //break;
                 }
+
+
+                
 
 
             }
@@ -346,6 +387,6 @@ namespace calibration_app
             return child;
         }
 
-
+       
     }
 }

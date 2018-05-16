@@ -13,7 +13,7 @@
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="文件">
                     <!--菜单项为MenuItem，文字使用属性 Header-->
-                    <!--<MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>-->
+                    <MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>
                     <MenuItem Header="导入数据" Name="ImportDataMenu" Click="ImportDataMenu_Click">
                         <MenuItem Header="导入源数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>
                         <MenuItem Header="导入校准数据" Name="ImportCalibrationMenu" Click="ImportCalibration_Click"></MenuItem>
@@ -28,27 +28,62 @@
             </Menu>
             <ToolBar DockPanel.Dock="Top">
                 <!--ToolBar和StatusBar就是一个容器-->
-                <!--<CheckBox Name="GatherCB" Content="开始采集" Click="GatherCB_Click" >
-                </CheckBox>-->
+                <CheckBox Name="GatherCB" Content="开始采集" Click="GatherCB_Click" >
+                </CheckBox>
                 <Menu>
                     <MenuItem Header="导入数据" >
                         <MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>
                         <MenuItem Header="导入校准数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
                 </Menu>
-                <Button Name="exportBtn" Content="导出图表">
+                <Button Name="ExportBtn" Content="导出图表" Click="ExportBtn_Click">
                 </Button>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->
             </ToolBar>
-            <lvc:CartesianChart Series="{Binding SeriesCollection}" LegendLocation="Right" >
-                <lvc:CartesianChart.AxisY>
-                    <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter}"></lvc:Axis>
-                </lvc:CartesianChart.AxisY>
-                <lvc:CartesianChart.AxisX>
-                    <lvc:Axis Title="Month" Labels="{Binding Labels}"></lvc:Axis>
-                </lvc:CartesianChart.AxisX>
-            </lvc:CartesianChart>
+            <Grid Name="ChartZone">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <lvc:CartesianChart Grid.Row="0" Grid.Column="0" Series="{Binding SeriesCollection[0]}" LegendLocation="Right" >
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[0]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Month" Labels="{Binding Labels[0]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                </lvc:CartesianChart>
+                <lvc:CartesianChart Grid.Row="0" Grid.Column="1" Series="{Binding SeriesCollection[1]}" LegendLocation="Right" >
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[1]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Month" Labels="{Binding Labels[1]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                </lvc:CartesianChart>
+                <lvc:CartesianChart Grid.Row="1" Grid.Column="0" Series="{Binding SeriesCollection[2]}" LegendLocation="Right" >
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[2]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Month" Labels="{Binding Labels[2]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                </lvc:CartesianChart>
+                <lvc:CartesianChart Grid.Row="1" Grid.Column="1" Series="{Binding SeriesCollection[3]}" LegendLocation="Right" >
+                    <lvc:CartesianChart.AxisY>
+                        <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[3]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisY>
+                    <lvc:CartesianChart.AxisX>
+                        <lvc:Axis Title="Month" Labels="{Binding Labels[3]}"></lvc:Axis>
+                    </lvc:CartesianChart.AxisX>
+                </lvc:CartesianChart>
+            </Grid>
+            
             <!--<TextBox Height="346" Text="This is my space" DockPanel.Dock="Top" />-->
             <!--<StatusBar DockPanel.Dock="Bottom" VerticalAlignment="Top" >
                 <TextBlock Text="statusBar"></TextBlock>
