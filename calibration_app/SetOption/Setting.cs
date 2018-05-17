@@ -11,62 +11,60 @@ using System.Collections.ObjectModel;
 
 namespace calibration_app.SetOption
 {
-    [XmlType(TypeName = "Setting")]
+    [XmlRoot(ElementName = "Setting")]
+    [Serializable]
     public class Setting
     {
-        [XmlIgnore]
-        public object Parent;
+        //[XmlIgnore]
+        //public object Parent;
 
-        [XmlElement("Gather")]
+        [XmlElement(ElementName = "Gather")]
         public Gather Gather { get; set; }
 
-        [XmlElement("Project")]
+        [XmlElement(ElementName = "Project")]
         public Project Project { get; set; }
     }
 
-    [XmlType(TypeName = "Project")]
     public class Project : Setting
     {
         //[XmlIgnore]
         //public Setting Parent = new Setting();
 
-        [XmlElement("Name")]
+        [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
 
-        [XmlElement("Lng")]
+        [XmlElement(ElementName = "Lng")]
         public double Lng { get; set; }
 
-        [XmlElement("Lat")]
+        [XmlElement(ElementName = "Lat")]
         public double Lat { get; set; }
     }
 
-    [XmlType(TypeName = "Gather")]
     public class Gather :Setting
     {
         //[XmlIgnore]
         //public Setting Parent = new Setting();
-        [XmlElement("DataPath")]
+        [XmlElement(ElementName = "DataPath")]
         public string DataPath { get; set; }
 
-        [XmlArray("ColumnList")]
+        [XmlArray(ElementName = "ColumnList")]
         public ObservableCollection<Column> ColumnList { get; set; }
     }
 
-    [XmlType(TypeName = "Column")]
     public class Column : Gather, INotifyPropertyChanged
     {
         //[XmlIgnore]
         //public Gather Parent = new Gather();
 
-        [XmlAttribute("Index")]
+        [XmlAttribute(AttributeName = "Index")]
         public int Index { get; set; }
-        [XmlAttribute("Name")]
+        [XmlAttribute(AttributeName = "Name")]
         public string Name { get; set; }
-        [XmlAttribute("Type")]
+        [XmlAttribute(AttributeName = "Type")]
         public string Type { get; set; }
-        [XmlAttribute("Frequency")]
+        [XmlAttribute(AttributeName = "Frequency")]
         public int Frequency { get; set; }
-        [XmlAttribute("Method")]
+        [XmlAttribute(AttributeName = "Method")]
         public string Method { get; set; }
 
 

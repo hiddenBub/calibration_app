@@ -73,7 +73,7 @@ namespace calibration_app
 
 
             // 将设置保存到setting.xml文件
-            SerializeToXml<Setting>("./setting.xml", setting);
+            SerializeToXml<Setting>("./Setting.xml", setting);
 
             // 操作完成后设置返回数据并关闭窗口
             this.DialogResult = true;
@@ -143,7 +143,7 @@ namespace calibration_app
             };
             if (ofd.ShowDialog() == true)
             {
-                string FileName = ofd.FileName;
+                 FileName = ofd.FileName;
             }
         }
 
@@ -159,7 +159,10 @@ namespace calibration_app
         {
             try
             {
-                using (System.IO.StreamWriter writer = new System.IO.StreamWriter(filePath)) { System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T)); xs.Serialize(writer, obj); }
+                using (System.IO.StreamWriter writer = new System.IO.StreamWriter(filePath)) {
+                    System.Xml.Serialization.XmlSerializerNamespaces ns = new System.Xml.Serialization.XmlSerializerNamespaces();
+                    //Add an empty namespace and empty value
+                    ns.Add("", ""); System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T)); xs.Serialize(writer, obj, ns); }
             }
             catch (Exception ex) { }
         }
