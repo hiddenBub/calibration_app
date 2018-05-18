@@ -33,6 +33,9 @@ namespace calibration_app
 
         private bool isGather = false;
 
+        /// <summary>
+        /// 表格容器根据所选选项卡布置表格
+        /// </summary>
         private Grid ChartZone = new Grid
         {
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -40,6 +43,8 @@ namespace calibration_app
            
         };
 
+
+        bool first = true;
 
 
         public bool IsGather
@@ -185,6 +190,8 @@ namespace calibration_app
 
 
 
+
+
         /// <summary>
         /// 切换采集开关
         /// </summary>
@@ -193,70 +200,101 @@ namespace calibration_app
         {
             if (!state)
             {
+                // 将开始采集时间点写入到文件做记录
+                FileStream fs = new FileStream(@".\Gather.txt", FileMode.Create);
+                string start = DateTime.Now.ToString() + "\r\n";
+                //获得字节数组
+                byte[] data = System.Text.Encoding.Default.GetBytes(start);
+                //开始写入
+                fs.Write(data, 0, data.Length);
+                //清空缓冲区、关闭流
+                fs.Flush();
+                fs.Close();
                 GatherCB.Content = GatherMenu.Header = "结束采集";
+                
             }
             else
             {
+                // 结束采集时将时间记录并写入文件
+                FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
+                string start = DateTime.Now.ToString() + "\r\n";
+                //获得字节数组
+                byte[] data = System.Text.Encoding.Default.GetBytes(start);
+                //开始写入
+                fs.Write(data, 0, data.Length);
+                //清空缓冲区、关闭流
+                fs.Flush();
+                fs.Close();
                 GatherCB.Content = GatherMenu.Header = "开始采集";
             }
             IsGather = !state;
         }
 
+
+        /// <summary>
+        /// 页面载入成功时的逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // 读取字段
-            Setting setting = DeserializeFromXml<Setting>(@"D:\C#\calibration_app\calibration_app\calibration_app\bin\Debug\Setting.xml");
+            first = false;
+            // 读取本地设置文件中的设置
+            Setting setting = DeserializeFromXml<Setting>(@".\Setting.xml");
+            // 遍历用户所做配置的字段
             foreach (Column temp in setting.Gather.ColumnList)
             {
+                // 根据字段名称布置选项卡并添加至ColTab内
                 TabItem myDnymicTab = new TabItem() { Header = temp.Name, MaxHeight = 20, MaxWidth = 78 };
                 ColTab.Items.Add(myDnymicTab);
-                
+
             }
+            // 页面载入成功后直接选择第一个选项卡
             ColTab.SelectedItem = ColTab.Items[0];
 
 
-            // 初始化chartZone
+            // 初始化chartZone的Grid控件
             ChartZone.RowDefinitions.Add(new RowDefinition());
             ChartZone.RowDefinitions.Add(new RowDefinition());
             ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
             ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
 
-            string dataPath = setting.Gather.DataPath;
-            string[] data = File.ReadAllLines(dataPath, Encoding.Default);
-            int i = 1;
-            DateTime startTime;
+            //string dataPath = setting.Gather.DataPath;
+            //string[] data = File.ReadAllLines(dataPath, Encoding.Default);
+            //int i = 1;
+            //DateTime startTime;
             // 遍历源数据，并按照需校准数据进行调整
-            foreach (string line in data)
-            {
-                int j = 0;
-                
-                if (i >= 5)
-                {
-                    string a = line;
-                    char[] sp = { ',', '"' };
-                    string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-                    Column column = setting.Gather.ColumnList[0];
-                    // 数据采集时间
-                    
-                    // 获取当前周期内的起始时间
-                    string date_temp = string.Format("{0:g}", dateTime);
-                    date_temp += ":00";
-                    // 获取当前周期内的频率
-                    double fre = 60 / column.Frequency;
-                    DateTime date_plus = (Convert.ToDateTime(date_temp).AddMinutes(fre * j));
-                    if (DateTime.Compare(dateTime, date_plus) < 0)
-                    {
+            //foreach (string line in data)
+            //{
+            //    int j = 0;
 
-                    }
-                    if (i == 5)
-                    {
-                        startTime = Convert.ToDateTime(datas[0]);
-                    }
-                    
-                    
-                }
-                i++;
-            }
+            //    if (i >= 5)
+            //    {
+            //        string a = line;
+            //        char[] sp = { ',', '"' };
+            //        string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+            //        Column column = setting.Gather.ColumnList[0];
+            //        // 数据采集时间
+
+            //        // 获取当前周期内的起始时间
+            //        string date_temp = string.Format("{0:g}", dateTime);
+            //        date_temp += ":00";
+            //        // 获取当前周期内的频率
+            //        double fre = 60 / column.Frequency;
+            //        DateTime date_plus = (Convert.ToDateTime(date_temp).AddMinutes(fre * j));
+            //        if (DateTime.Compare(dateTime, date_plus) < 0)
+            //        {
+
+            //        }
+            //        if (i == 5)
+            //        {
+            //            startTime = Convert.ToDateTime(datas[0]);
+            //        }
+
+
+            //    }
+            //    i++;
+            //}
 
 
             //List<CartesianChart> cartesianChart = new CartesianChart
@@ -301,7 +339,25 @@ namespace calibration_app
             }
         }
 
-
-
+        private void ColTab_Change(object sender, SelectionChangedEventArgs e)
+        {
+            if (!first)
+            {
+                int i = 0;
+                foreach (TabItem it in ColTab.Items)
+                {
+                    var item = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.Items[i]) as TabItem;
+                    string header = item.Header.ToString();
+                    string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    item.Header = headers[0];
+                    i++;
+                }
+                var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
+                temp.Header += "-selected";
+                
+                //MessageBox.Show(ColTab.SelectedIndex.ToString());
+            }
+            
+        }
     }
 }

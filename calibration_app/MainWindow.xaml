@@ -41,9 +41,9 @@
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->
             </ToolBar>
-            <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5" >
-                <!--<TabItem Header="户型" MaxHeight="20" MaxWidth="78">
-                    <Grid Name="ChartZone" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+            <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5" SelectionChanged="ColTab_Change" >
+                <!--<TabItem Name="tab1" Header="户型" MaxHeight="20" MaxWidth="78" >-->
+                    <!--<Grid Name="ChartZone" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition></ColumnDefinition>
                             <ColumnDefinition></ColumnDefinition>
@@ -84,8 +84,8 @@
                                 <lvc:Axis Title="Month" Labels="{Binding Labels[3]}"></lvc:Axis>
                             </lvc:CartesianChart.AxisX>
                         </lvc:CartesianChart>
-                    </Grid>
-                </TabItem>
+                    </Grid>-->
+                <!--</TabItem>
                 <TabItem Header="空间" MaxHeight="20" MaxWidth="78">
                     
                 </TabItem>
