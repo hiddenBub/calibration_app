@@ -14,8 +14,8 @@
                 <MenuItem Header="文件">
                     <!--菜单项为MenuItem，文字使用属性 Header-->
                     <MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>
-                    <MenuItem Header="导入数据" Name="ImportDataMenu" Click="ImportDataMenu_Click">
-                        <MenuItem Header="导入源数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>
+                    <MenuItem Header="导入数据" Name="ImportDataMenu" >
+                        <!--<MenuItem Header="导入源数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>-->
                         <MenuItem Header="导入校准数据" Name="ImportCalibrationMenu" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
                     <MenuItem Header="关闭" Name="CloseWindowMenu" Click="CloseWindowMenu_Click"></MenuItem>
@@ -32,8 +32,8 @@
                 </CheckBox>
                 <Menu>
                     <MenuItem Header="导入数据" >
-                        <MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>
-                        <MenuItem Header="导入校准数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
+                        <!--<MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>-->
+                        <MenuItem Header="导入本地数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
                 </Menu>
                 <Button Name="ExportBtn" Content="导出图表" Click="ExportBtn_Click">

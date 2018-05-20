@@ -22,6 +22,9 @@ using LiveCharts.Defaults;
 using LiveCharts.Wpf;
 using System.Drawing.Drawing2D;
 using calibration_app.SetOption;
+using Microsoft.Win32;
+using System.Data.OleDb;
+using System.Data;
 
 namespace calibration_app
 {
@@ -62,7 +65,10 @@ namespace calibration_app
             } 
         }
 
-        
+        /// <summary>
+        /// 连接字符串
+        /// </summary>
+        static string strConn = "";
 
 
         private List<SeriesCollection> seriesCollection = new List<SeriesCollection>();
@@ -124,17 +130,46 @@ namespace calibration_app
 
         private void ImportSource_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("导入数据源");
+            bool IsGathering = isGather;
+            if (IsGathering)
+            {
+                MessageBox.Show("数据采集中，请结束采集后导入需校准数据","错误");
+            }
+            
         }
 
         private void ImportCalibration_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("导入校准数据");
+            bool IsGathering = isGather;
+            if (IsGathering)
+            {
+                MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
+            }
+            else
+            {
+                //打开一个文件选择框
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.Title = "Excel文件";
+                ofd.FileName = "";
+                ofd.Filter = "Excel文件(*.xls)|*";
+                DataTable dt = new DataTable();
+                string filePath = Application.StartupPath + @"\Skills_TreeView\Skills.xls";
+
+                string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
+                using (OleDbConnection conn = new OleDbConnection(strConn))
+                {
+                    conn.Open();
+                    string strExcel = "select * from [sheet1$]";
+                    OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
+                    myCommand.Fill(dt);
+                }
+                return dt;
+            }
         }
-        private void ImportDataMenu_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("导入校准数据");
-        }
+        //private void ImportDataMenu_Click(object sender, RoutedEventArgs e)
+        //{
+        //    MessageBox.Show("导入校准数据");
+        //}
 
         /// <summary>
         /// 菜单栏采集状态切换
@@ -230,6 +265,8 @@ namespace calibration_app
             IsGather = !state;
         }
 
+        
+
 
         /// <summary>
         /// 页面载入成功时的逻辑
@@ -258,6 +295,59 @@ namespace calibration_app
             ChartZone.RowDefinitions.Add(new RowDefinition());
             ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
             ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
+
+            SeriesCollection tem = new SeriesCollection
+                {
+                    new LineSeries
+                    {
+                        Title = "Series 1",
+                        Values = new ChartValues<double> { 4, 6, 5, 2 ,4 }
+                    },
+                    new ScatterSeries
+                    {
+                        Title = "Series 2",
+                        Values = new ChartValues<ObservablePoint>
+                        {
+                            new ObservablePoint(0, 5),
+                            new ObservablePoint(1, 7),
+                            new ObservablePoint(2, 6),
+                            new ObservablePoint(3, 4),
+                            new ObservablePoint(4, 5)
+                        },
+
+                        PointGeometry = DefaultGeometries.Triangle,
+                    },
+
+                };
+            
+
+            List<string> temp_L = new List<string> { "Jan", "Feb", "Mar", "Apr", "May" };
+           
+            Func<double, string> temp_YFormatter = value => value.ToString("C");
+            
+
+            CartesianChart cartesianChart = new CartesianChart
+            {
+                Series = SeriesCollection[0],
+                LegendLocation = LegendLocation.Right,
+                AxisY = new AxesCollection {
+                    new Axis{
+                        Title = "Sales",
+                        LabelFormatter = temp_YFormatter,
+                    }
+                },
+                AxisX = new AxesCollection
+                {
+                    new Axis
+                    {
+                        Title = "month",
+                        Labels = temp_L
+                    }
+                }
+            };
+            ChartZone.Children.Add(cartesianChart);
+            cartesianChart.SetValue(Grid.RowSpanProperty,2);
+            cartesianChart.SetValue(Grid.ColumnSpanProperty,2);
 
             //string dataPath = setting.Gather.DataPath;
             //string[] data = File.ReadAllLines(dataPath, Encoding.Default);
@@ -350,11 +440,12 @@ namespace calibration_app
                     string header = item.Header.ToString();
                     string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
                     item.Header = headers[0];
+                    item.Content = null;
                     i++;
                 }
                 var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
                 temp.Header += "-selected";
-                
+                temp.Content = ChartZone;
                 //MessageBox.Show(ColTab.SelectedIndex.ToString());
             }
             
