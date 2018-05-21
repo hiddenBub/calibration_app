@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
+using System.Windows.Threading;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -65,66 +65,61 @@ namespace calibration_app
             } 
         }
 
+        private ulong spendTime = 0;
+
+        private List<decimal> dataTemp = new List<decimal>();
+
         /// <summary>
         /// 连接字符串
         /// </summary>
-        static string strConn = "";
+        private static string strConn = "";
 
+        /// <summary>
+        /// 系统设置
+        /// </summary>
+        private Setting setting;
 
+        /// <summary>
+        /// 计时器
+        /// </summary>
+        private DispatcherTimer dispatcherTimer = new DispatcherTimer();
+
+        /// <summary>
+        /// 操作的选项卡索引
+        /// </summary>
+        private int optionIndex = 0;
+
+        /// <summary>
+        /// 图表LIST
+        /// </summary>
+        private List<CartesianChart> cartesianChart = new List<CartesianChart>();
+
+        /// <summary>
+        /// 图表内数据集LIST
+        /// </summary>
         private List<SeriesCollection> seriesCollection = new List<SeriesCollection>();
 
+        /// <summary>
+        /// 图标内标签LIST
+        /// </summary>
         private List<List<string>> labels = new List<List<string>>();
 
+        /// <summary>
+        /// 图标内Y轴数据格式化LIST
+        /// </summary>
         private List<Func<double, string>> yFormatter = new List<Func<double, string>>();
         public List<SeriesCollection> SeriesCollection { get => seriesCollection; set => seriesCollection = value; }
         public List<List<string>> Labels { get => labels; set => labels = value; }
         public List<Func<double, string>> YFormatter { get => yFormatter; set => yFormatter = value; }
+        public List<CartesianChart> CartesianChart { get => cartesianChart; set => cartesianChart = value; }
+        public Setting Setting { get => setting; set => setting = value; }
 
         public MainWindow()
         {
             
             
             InitializeComponent();
-            for (int i = 0; i < 4; i++)
-            {
-
-                SeriesCollection temp= new SeriesCollection
-                {
-                    new LineSeries
-                    {
-                        Title = "Series 1",
-                        Values = new ChartValues<double> { 4, 6, 5, 2 ,4 }
-                    },
-                    new ScatterSeries
-                    {
-                        Title = "Series 2",
-                        Values = new ChartValues<ObservablePoint>
-                        {
-                            new ObservablePoint(0, 5),
-                            new ObservablePoint(1, 7),
-                            new ObservablePoint(2, 6),
-                            new ObservablePoint(3, 4),
-                            new ObservablePoint(4, 5)
-                        },
-                        
-                        PointGeometry = DefaultGeometries.Triangle,
-                    },
-                   
-                };
-                SeriesCollection.Add(temp);
-
-                List<string> temp_L = new List<string> { "Jan", "Feb", "Mar", "Apr", "May" };
-                Labels.Add(temp_L);
-                Func<double, string> temp_YFormatter = value => value.ToString("C");
-                YFormatter.Add(temp_YFormatter);
-                
-
-            }
-
             
-
-            
-            DataContext = this;
         }
         
 
@@ -145,26 +140,26 @@ namespace calibration_app
             {
                 MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
             }
-            else
-            {
-                //打开一个文件选择框
-                OpenFileDialog ofd = new OpenFileDialog();
-                ofd.Title = "Excel文件";
-                ofd.FileName = "";
-                ofd.Filter = "Excel文件(*.xls)|*";
-                DataTable dt = new DataTable();
-                string filePath = Application.StartupPath + @"\Skills_TreeView\Skills.xls";
+            //else
+            //{
+            //    //打开一个文件选择框
+            //    OpenFileDialog ofd = new OpenFileDialog();
+            //    ofd.Title = "Excel文件";
+            //    ofd.FileName = "";
+            //    ofd.Filter = "Excel文件(*.xls)|*";
+            //    DataTable dt = new DataTable();
+            //    string filePath = Application.StartupPath + @"\Skills_TreeView\Skills.xls";
 
-                string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
-                using (OleDbConnection conn = new OleDbConnection(strConn))
-                {
-                    conn.Open();
-                    string strExcel = "select * from [sheet1$]";
-                    OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
-                    myCommand.Fill(dt);
-                }
-                return dt;
-            }
+            //    string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
+            //    using (OleDbConnection conn = new OleDbConnection(strConn))
+            //    {
+            //        conn.Open();
+            //        string strExcel = "select * from [sheet1$]";
+            //        OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
+            //        myCommand.Fill(dt);
+            //    }
+            //    return dt;
+            //}
         }
         //private void ImportDataMenu_Click(object sender, RoutedEventArgs e)
         //{
@@ -237,16 +232,21 @@ namespace calibration_app
             {
                 // 将开始采集时间点写入到文件做记录
                 FileStream fs = new FileStream(@".\Gather.txt", FileMode.Create);
-                string start = DateTime.Now.ToString() + "\r\n";
+                string start = "2018-05-09 21:16:39\r\n";
                 //获得字节数组
-                byte[] data = System.Text.Encoding.Default.GetBytes(start);
+                byte[] data = Encoding.Default.GetBytes(start);
                 //开始写入
                 fs.Write(data, 0, data.Length);
                 //清空缓冲区、关闭流
                 fs.Flush();
                 fs.Close();
                 GatherCB.Content = GatherMenu.Header = "结束采集";
-                
+                // 重新获取图表
+                GetChart();
+                //定时查询-定时器
+                dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+                dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+                dispatcherTimer.Start();
             }
             else
             {
@@ -261,6 +261,7 @@ namespace calibration_app
                 fs.Flush();
                 fs.Close();
                 GatherCB.Content = GatherMenu.Header = "开始采集";
+                dispatcherTimer.Stop();
             }
             IsGather = !state;
         }
@@ -277,7 +278,7 @@ namespace calibration_app
         {
             first = false;
             // 读取本地设置文件中的设置
-            Setting setting = DeserializeFromXml<Setting>(@".\Setting.xml");
+            Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
             // 遍历用户所做配置的字段
             foreach (Column temp in setting.Gather.ColumnList)
             {
@@ -291,107 +292,9 @@ namespace calibration_app
 
 
             // 初始化chartZone的Grid控件
-            ChartZone.RowDefinitions.Add(new RowDefinition());
-            ChartZone.RowDefinitions.Add(new RowDefinition());
-            ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
-            ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
+            AddCell(2, 2);
 
-            SeriesCollection tem = new SeriesCollection
-                {
-                    new LineSeries
-                    {
-                        Title = "Series 1",
-                        Values = new ChartValues<double> { 4, 6, 5, 2 ,4 }
-                    },
-                    new ScatterSeries
-                    {
-                        Title = "Series 2",
-                        Values = new ChartValues<ObservablePoint>
-                        {
-                            new ObservablePoint(0, 5),
-                            new ObservablePoint(1, 7),
-                            new ObservablePoint(2, 6),
-                            new ObservablePoint(3, 4),
-                            new ObservablePoint(4, 5)
-                        },
-
-                        PointGeometry = DefaultGeometries.Triangle,
-                    },
-
-                };
-            
-
-            List<string> temp_L = new List<string> { "Jan", "Feb", "Mar", "Apr", "May" };
-           
-            Func<double, string> temp_YFormatter = value => value.ToString("C");
-            
-
-            CartesianChart cartesianChart = new CartesianChart
-            {
-                Series = SeriesCollection[0],
-                LegendLocation = LegendLocation.Right,
-                AxisY = new AxesCollection {
-                    new Axis{
-                        Title = "Sales",
-                        LabelFormatter = temp_YFormatter,
-                    }
-                },
-                AxisX = new AxesCollection
-                {
-                    new Axis
-                    {
-                        Title = "month",
-                        Labels = temp_L
-                    }
-                }
-            };
-            ChartZone.Children.Add(cartesianChart);
-            cartesianChart.SetValue(Grid.RowSpanProperty,2);
-            cartesianChart.SetValue(Grid.ColumnSpanProperty,2);
-
-            //string dataPath = setting.Gather.DataPath;
-            //string[] data = File.ReadAllLines(dataPath, Encoding.Default);
-            //int i = 1;
-            //DateTime startTime;
-            // 遍历源数据，并按照需校准数据进行调整
-            //foreach (string line in data)
-            //{
-            //    int j = 0;
-
-            //    if (i >= 5)
-            //    {
-            //        string a = line;
-            //        char[] sp = { ',', '"' };
-            //        string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-            //        Column column = setting.Gather.ColumnList[0];
-            //        // 数据采集时间
-
-            //        // 获取当前周期内的起始时间
-            //        string date_temp = string.Format("{0:g}", dateTime);
-            //        date_temp += ":00";
-            //        // 获取当前周期内的频率
-            //        double fre = 60 / column.Frequency;
-            //        DateTime date_plus = (Convert.ToDateTime(date_temp).AddMinutes(fre * j));
-            //        if (DateTime.Compare(dateTime, date_plus) < 0)
-            //        {
-
-            //        }
-            //        if (i == 5)
-            //        {
-            //            startTime = Convert.ToDateTime(datas[0]);
-            //        }
-
-
-            //    }
-            //    i++;
-            //}
-
-
-            //List<CartesianChart> cartesianChart = new CartesianChart
-            //{
-            //    Series = SeriesCollection[0],
-            //    LegendLocation = LegendLocation.Right,
-            //};
+            GetChart();
         }
 
         private void ExportBtn_Click(object sender, RoutedEventArgs e)
@@ -429,26 +332,374 @@ namespace calibration_app
             }
         }
 
+        /// <summary>
+        /// 切换选项卡后的逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ColTab_Change(object sender, SelectionChangedEventArgs e)
         {
+            // 判断当前是否是首次进入页面，主要用于屏蔽一些bug
             if (!first)
             {
+                // 设置索引初始值
                 int i = 0;
+                // 遍历选项卡数据(初始化原始选项卡标签)
                 foreach (TabItem it in ColTab.Items)
                 {
+                    // 将当前选项卡的对象存至item变量中
                     var item = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.Items[i]) as TabItem;
+                    // 取得当前选项卡的显示标题
                     string header = item.Header.ToString();
+                    // 将header分割成数组
                     string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+                    // 取得只需显示的部分
                     item.Header = headers[0];
+                    // 将选项卡里的内容移除，用作数据表grid单例构造
                     item.Content = null;
+                    // 更新索引
                     i++;
                 }
+                // 取得当前操作的选项卡并将该对象存至temp变量中
                 var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
+                optionIndex = ColTab.SelectedIndex;
+                // 以可显示的方式展示被选中选项卡
                 temp.Header += "-selected";
+                // 将图表grid存放至选项卡中
                 temp.Content = ChartZone;
-                //MessageBox.Show(ColTab.SelectedIndex.ToString());
             }
             
+        }
+
+        /// <summary>
+        /// 定时器回调函数
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DispatcherTimer_Tick(object sender, EventArgs e)
+        {
+            string filePath = "./Gather.txt";
+            DateTime startTime = DateTime.Now;
+            DateTime? endTime = null;
+            if (File.Exists(filePath))
+            {
+                // 读取gather.txt文件获取起始和结束采集时间
+                StreamReader sr = new StreamReader(@"./Gather.txt", Encoding.Default);
+                // 定义起始时间
+                startTime = Convert.ToDateTime(sr.ReadLine());
+                // 结束时间
+                endTime = startTime.AddSeconds(spendTime);
+                sr.Close();
+            }
+            // 获取当前周期内的起始时间
+            string date_temp = string.Format("{0:g}", startTime);
+            date_temp += ":00";
+            // 获取当前周期内的频率
+            double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
+            int i = 1;
+            // 获取数据
+            string dataPath = Setting.Gather.DataPath;
+            string[] data = File.ReadAllLines(dataPath, Encoding.Default);
+            foreach (string line in data)
+            {
+                if (i >= 5)
+                {
+                    // 存储当前行
+                    string a = line;
+                    // 设置分割字符
+                    char[] sp = { ',', '"' };
+                    // 存储数据型
+                    string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+                    if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
+                    
+                    // 获取当前选择选项卡的数据模型
+                    Column column = Setting.Gather.ColumnList[optionIndex];
+
+                    int length = labels[0].Count;
+                    string lastTimeStemp = labels[0][(length) - 1];
+                    // 将数据中的时间取出
+                    DateTime dateTime = Convert.ToDateTime(datas[0]);
+                    // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
+                    if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
+                    {
+                        if (!decimal.TryParse(datas[optionIndex + 2], out decimal x))
+                        {
+                            continue;
+                        }
+                        // 将取得的数据存入
+                        dataTemp.Add(x);
+                        // 获取临时数据存储数组项目数量                                
+                        int count = dataTemp.Count;
+                        // 对数据进行求和
+                        decimal sum = dataTemp.Sum();
+                        // 根据当前选项卡的设置获取正确的数据
+                        if (column.Method.ToLower() == "avg")
+                        {
+                            if (SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+                            {
+                                SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+                            }
+                            SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum / count));
+                        }
+                        else if (column.Method.ToLower() == "sum")
+                        {
+                            if(SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+                            {
+                                SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+                            }
+                            SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum));
+                        }
+                        
+                        // 当两个相等时获取
+                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
+                        {
+                            // 将新的坐标轴时间加入Labels数组
+
+                            Labels[0].Add(Convert.ToDateTime(lastTimeStemp).AddSeconds(column.Frequency).ToString());
+
+                            dataTemp.Clear();
+                        }
+                    }
+                    
+                }
+                i++;
+            }
+            spendTime++;
+        }
+
+        /// <summary>
+        /// 为表格ChartZone填充行列
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        public void AddCell(int row,int col)
+        {
+            // 布置行分割
+            for (int i = 0; i < row; i++)
+            {
+                ChartZone.RowDefinitions.Add(new RowDefinition());
+            }
+            for (int j = 0; j < col; j++)
+            {
+                ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
+            }
+        }
+
+
+        private void GetChart()
+        {
+            string filepath = @"./calibrationData.dat";
+            // 将chartzone内所有子元素清空
+            ChartZone.Children.Clear();
+            // 已经上传需校准数据时
+            if (File.Exists(filepath))
+            {
+
+            }
+            // 没有上传校准数据时(包括采集中/采集结束但并未上传数据集)
+            else
+            {
+               
+                string filePath = "./Gather.txt";
+                // 起始时间
+                DateTime startTime = DateTime.Now;
+                // 结束时间
+                DateTime? endTime = null;
+                if (File.Exists(filePath))
+                {
+                    // 读取gather.txt文件获取起始和结束采集时间
+                    StreamReader sr = new StreamReader(@"./Gather.txt", Encoding.Default);
+                    // 设置当前行数
+                    int index = 1;
+                    
+                    
+                    // 定义当前行内容
+                    String lineSr;
+                    // 
+                    while ((lineSr = sr.ReadLine()) != null)
+                    {
+                        if (index == 1)
+                        {
+                            startTime = Convert.ToDateTime(lineSr);
+                        }
+                        else if (index == 2)
+                        {
+                            endTime = Convert.ToDateTime(lineSr);
+                        }
+                        index++;
+                    }
+                    if (endTime == null) endTime = startTime;
+                    sr.Close();
+                }
+                // 获取当前周期内的起始时间
+                string date_temp = string.Format("{0:g}", startTime);
+                date_temp += ":00";
+                // 获取当前周期内的频率
+                double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
+               
+                
+                
+                int i = 1;
+                // 获取数据
+                string dataPath = Setting.Gather.DataPath;
+                string[] data = File.ReadAllLines(dataPath, Encoding.Default);
+                // 设置曲线对象
+                LineSeries ls = new LineSeries
+                {
+                    Title = Setting.Gather.ColumnList[optionIndex].Name,
+                    Values = new ChartValues<double> {}
+                };
+                // 临时数据存储数组
+                List<decimal> dataList = new List<decimal>();
+            // 遍历源数据，并按照需校准数据进行调整
+                foreach (string line in data)
+                {
+                    if (i >= 5)
+                    {
+                        // 存储当前行
+                        string a = line;
+                        // 设置分割字符
+                        char[] sp = { ',', '"' };
+                        // 存储数据型
+                        string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+                        if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
+                        if (i == 5)
+                        {
+                            // 数据记录开始时间有可能大于当前时间段，将时间对扩大查找至当前分钟内后几段
+                            int time = 1;
+
+                            // 如果当前时间段处于数据时间左侧则将time+1
+                            while (DateTime.Compare(Convert.ToDateTime(date_temp).AddSeconds(fre * time), Convert.ToDateTime(datas[0])) < 0) time++;
+
+                            // 进入到此处时说明时间段处于数据时间右侧，可以正确的进入循环
+                            if (labels.Count > 0)
+                            {
+                                Labels[0] = new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() };
+                            }
+                            else
+                            {
+                                Labels.Add(new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() });
+                            }
+
+                        }
+                        // 获取当前选择选项卡的数据模型
+                        Column column = Setting.Gather.ColumnList[optionIndex];
+
+                        int length = labels[0].Count;
+                        string lastTimeStemp = labels[0][(length) - 1];
+                        // 将数据中的时间取出
+                        DateTime dateTime = Convert.ToDateTime(datas[0]);
+                        // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
+                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
+                        {
+                            if (!decimal.TryParse(datas[optionIndex + 2], out decimal x))
+                            {
+                                continue;
+                            }
+                            // 将取得的数据存入
+                            dataList.Add(x);
+                            // 当两个相等时获取
+                            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
+                            {
+                                // 将新的坐标轴时间加入Labels数组
+                             
+                                Labels[0].Add(Convert.ToDateTime(lastTimeStemp).AddSeconds(column.Frequency).ToString());
+                              
+                                // 获取临时数据存储数组项目数量                                
+                                int count = dataList.Count;
+                                // 对数据进行求和
+                                decimal sum = dataList.Sum();
+                                // 根据当前选项卡的设置获取正确的数据
+                                if (column.Method.ToLower() == "avg")
+                                {
+                                    ls.Values.Add(Convert.ToDouble(sum / count));
+                                }
+                                else if (column.Method.ToLower() == "sum")
+                                {
+                                    ls.Values.Add(Convert.ToDouble(sum));
+                                }
+                                dataList.Clear();
+                            }
+                        }
+
+
+                    }
+                    i++;
+                }
+                // Y轴的轴标签显示结构
+                if (YFormatter.Count > 0)
+                {
+                    YFormatter[0] = value => value.ToString("N");
+                }
+                else
+                {
+                    YFormatter.Add(value => value.ToString("N"));
+                }
+                if (SeriesCollection.Count > 0)
+                {
+                    SeriesCollection[0] = new SeriesCollection
+                    {
+                        ls
+                    };
+                }
+                else
+                {
+                    seriesCollection.Add(new SeriesCollection
+                    {
+                        ls
+                    });
+                }
+                if (CartesianChart.Count > 0) {
+                    cartesianChart[0] = new CartesianChart
+                    {
+                        Series = SeriesCollection[0],
+                        LegendLocation = LegendLocation.Right,
+                        AxisY = new AxesCollection {
+                    new Axis{
+                        Title = "辐射强度,单位W/m²",
+                        LabelFormatter = YFormatter[0],
+                    }
+                },
+                        AxisX = new AxesCollection
+                    {
+                        new Axis
+                        {
+                            Title = "时间",
+                            Labels = Labels[0]
+                        }
+                    }
+                    };
+                }
+                else
+                {
+                    cartesianChart.Add(new CartesianChart
+                    {
+                        Series = SeriesCollection[0],
+                        LegendLocation = LegendLocation.Right,
+                        AxisY = new AxesCollection {
+                    new Axis{
+                        Title = "辐射强度,单位W/m²",
+                        LabelFormatter = YFormatter[0],
+                    }
+                },
+                        AxisX = new AxesCollection
+                    {
+                        new Axis
+                        {
+                            Title = "时间",
+                            Labels = Labels[0]
+                        }
+                    }
+                    });
+                }
+                
+                // 将图表实例添加至ChartZone这个grid中去
+                ChartZone.Children.Add(cartesianChart[0]);
+                // 设定图表合并行参数
+                cartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
+                // 设定图表合并列参数
+                cartesianChart[0].SetValue(Grid.ColumnSpanProperty, 2);
+            }
         }
     }
 }
