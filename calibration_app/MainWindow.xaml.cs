@@ -67,7 +67,7 @@ namespace calibration_app
 
         private ulong spendTime = 0;
 
-        private List<decimal> dataTemp = new List<decimal>();
+        private List<List<decimal>> dataTemp = new List<List<decimal>>();
 
         /// <summary>
         /// 连接字符串
@@ -381,6 +381,7 @@ namespace calibration_app
             string filePath = "./Gather.txt";
             DateTime startTime = DateTime.Now;
             DateTime? endTime = null;
+            
             if (File.Exists(filePath))
             {
                 // 读取gather.txt文件获取起始和结束采集时间
@@ -402,6 +403,7 @@ namespace calibration_app
             string[] data = File.ReadAllLines(dataPath, Encoding.Default);
             foreach (string line in data)
             {
+                bool correct = true;
                 if (i >= 5)
                 {
                     // 存储当前行
@@ -422,34 +424,6 @@ namespace calibration_app
                     // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
                     if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
                     {
-                        if (!decimal.TryParse(datas[optionIndex + 2], out decimal x))
-                        {
-                            continue;
-                        }
-                        // 将取得的数据存入
-                        dataTemp.Add(x);
-                        // 获取临时数据存储数组项目数量                                
-                        int count = dataTemp.Count;
-                        // 对数据进行求和
-                        decimal sum = dataTemp.Sum();
-                        // 根据当前选项卡的设置获取正确的数据
-                        if (column.Method.ToLower() == "avg")
-                        {
-                            if (SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
-                            {
-                                SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
-                            }
-                            SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum / count));
-                        }
-                        else if (column.Method.ToLower() == "sum")
-                        {
-                            if(SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
-                            {
-                                SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
-                            }
-                            SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum));
-                        }
-                        
                         // 当两个相等时获取
                         if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
                         {
@@ -459,6 +433,64 @@ namespace calibration_app
 
                             dataTemp.Clear();
                         }
+                        for (int di = 2; di < datas.Length; di++)
+                        {
+                            if (!decimal.TryParse(datas[di], out decimal x))
+                            {
+                                correct = false;
+                                continue;
+                            }
+                            int scIndex = di - 2;
+
+                            // 将取得的数据存入
+                            if (dataTemp.Count > scIndex)
+                            {
+                                dataTemp[scIndex].Add(x);
+                            }
+                            else
+                            {
+                                dataTemp.Add(new List<decimal> { x });
+                            }
+
+
+                        }
+                        // 继续跳出循环
+                        if (!correct) continue;
+                        // 获取临时数据存储数组项目数量                                
+                        int count = dataTemp.Count;
+                        for (int dli = 0; dli < count; dli++)
+                        {
+                            int dcount = dataTemp[dli].Count;
+                            // 对数据进行求和
+                            decimal sum = dataTemp[dli].Sum();
+                            if (SeriesCollection[0][dli].Values.Count > 0 && dataTemp[dli].Count > 1)
+                            {
+                                SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
+                            }
+                            SeriesCollection[0][dli].Values.Add(Convert.ToDouble(sum / dcount));
+
+
+                        }
+                        
+                        //// 根据当前选项卡的设置获取正确的数据
+                        //if (column.Method.ToLower() == "avg")
+                        //{
+                        //    if (SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+                        //    {
+                        //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+                        //    }
+                        //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum / count));
+                        //}
+                        //else if (column.Method.ToLower() == "sum")
+                        //{
+                        //    if(SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+                        //    {
+                        //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+                        //    }
+                        //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum));
+                        //}
+                        
+                        
                     }
                     
                 }
@@ -544,44 +576,87 @@ namespace calibration_app
                 string dataPath = Setting.Gather.DataPath;
                 string[] data = File.ReadAllLines(dataPath, Encoding.Default);
                 // 设置曲线对象
-                LineSeries ls = new LineSeries
-                {
-                    Title = Setting.Gather.ColumnList[optionIndex].Name,
-                    Values = new ChartValues<double> {}
-                };
+                
                 // 临时数据存储数组
-                List<decimal> dataList = new List<decimal>();
+                List<List<decimal>> dataList = new List<List<decimal>>();
             // 遍历源数据，并按照需校准数据进行调整
                 foreach (string line in data)
                 {
-                    if (i >= 5)
+                    // 存储当前行
+                    string a = line;
+                    // 设置分割字符
+                    char[] sp = { ',', '"' };
+                    // 存储数据型
+                    string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+                    // 数据正确判断依据
+                    bool correct = true;
+                    if (i == 2)
                     {
-                        // 存储当前行
-                        string a = line;
-                        // 设置分割字符
-                        char[] sp = { ',', '"' };
-                        // 存储数据型
-                        string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-                        if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
-                        if (i == 5)
+                        for (int di = 2; di < datas.Length; di++)
                         {
-                            // 数据记录开始时间有可能大于当前时间段，将时间对扩大查找至当前分钟内后几段
-                            int time = 1;
-
-                            // 如果当前时间段处于数据时间左侧则将time+1
-                            while (DateTime.Compare(Convert.ToDateTime(date_temp).AddSeconds(fre * time), Convert.ToDateTime(datas[0])) < 0) time++;
-
-                            // 进入到此处时说明时间段处于数据时间右侧，可以正确的进入循环
-                            if (labels.Count > 0)
+                            int count = di - 1;
+                            int index = di - 2;
+                            LineSeries ls = new LineSeries
                             {
-                                Labels[0] = new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() };
+                                Title = datas[di],// 设置集合标题
+                                Values = new ChartValues<double> { },                // 初始化数据集
+                                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                            };
+                            if (SeriesCollection.Count > 0)
+                            {
+                                
+                                if (SeriesCollection[0].Count >= count)
+                                {
+                                    seriesCollection[0][index] = ls;
+                                }
+                                else
+                                {
+                                    SeriesCollection[0].Add(ls);
+                                }
+                                    
                             }
                             else
                             {
-                                Labels.Add(new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() });
+                                seriesCollection.Add(new SeriesCollection { });
+                                if (SeriesCollection[0].Count >= di)
+                                {
+                                    seriesCollection[0][index] = ls;
+                                }
+                                else
+                                {
+                                    SeriesCollection[0].Add(ls);
+                                }
                             }
-
                         }
+                        
+                        
+                        
+                    }
+                    else if (i == 5)
+                    {
+                        // 数据记录开始时间有可能大于当前时间段，将时间对扩大查找至当前分钟内后几段
+                        int time = 1;
+
+                        // 如果当前时间段处于数据时间左侧则将time+1
+                        while (DateTime.Compare(Convert.ToDateTime(date_temp).AddSeconds(fre * time), Convert.ToDateTime(datas[0])) < 0) time++;
+
+                        // 进入到此处时说明时间段处于数据时间右侧，可以正确的进入循环
+                        if (labels.Count > 0)
+                        {
+                            Labels[0] = new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() };
+                        }
+                        else
+                        {
+                            Labels.Add(new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() });
+                        }
+
+                    }
+                    else if (i > 5)
+                    {
+                        
+                        
+                        // 如果时间数据越界中断循环
+                        if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
                         // 获取当前选择选项卡的数据模型
                         Column column = Setting.Gather.ColumnList[optionIndex];
 
@@ -589,41 +664,60 @@ namespace calibration_app
                         string lastTimeStemp = labels[0][(length) - 1];
                         // 将数据中的时间取出
                         DateTime dateTime = Convert.ToDateTime(datas[0]);
+                        
                         // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
                         if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
                         {
-                            if (!decimal.TryParse(datas[optionIndex + 2], out decimal x))
+                            // 判断当前点是否是个正确的数据
+                            for (int di = 2;di < datas.Length; di++)
                             {
-                                continue;
+                                if (!decimal.TryParse(datas[di], out decimal x))
+                                {
+                                    correct = false;
+                                    continue;
+                                }
+                                int scIndex = di - 2;
+                                
+                                // 将取得的数据存入
+                                if (dataList.Count > scIndex)
+                                {
+                                    dataList[scIndex].Add(x);
+                                }
+                                else
+                                {
+                                    dataList.Add(new List<decimal> { x });
+                                }
+                                
+                                
                             }
-                            // 将取得的数据存入
-                            dataList.Add(x);
                             // 当两个相等时获取
                             if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
                             {
                                 // 将新的坐标轴时间加入Labels数组
-                             
+
                                 Labels[0].Add(Convert.ToDateTime(lastTimeStemp).AddSeconds(column.Frequency).ToString());
-                              
+
                                 // 获取临时数据存储数组项目数量                                
                                 int count = dataList.Count;
-                                // 对数据进行求和
-                                decimal sum = dataList.Sum();
-                                // 根据当前选项卡的设置获取正确的数据
-                                if (column.Method.ToLower() == "avg")
+                                for (int dli = 0; dli < count; dli++)
                                 {
-                                    ls.Values.Add(Convert.ToDouble(sum / count));
+                                    int dcount = dataList[dli].Count;
+                                    // 对数据进行求和
+                                    decimal sum = dataList[dli].Sum();
+
+                                    SeriesCollection[0][dli].Values.Add(Convert.ToDouble(sum / dcount));
+                                    
                                 }
-                                else if (column.Method.ToLower() == "sum")
-                                {
-                                    ls.Values.Add(Convert.ToDouble(sum));
-                                }
+                                
+                                
                                 dataList.Clear();
                             }
+                            if (!correct) continue;
+                            
                         }
-
-
+               
                     }
+                    
                     i++;
                 }
                 // Y轴的轴标签显示结构
@@ -635,20 +729,7 @@ namespace calibration_app
                 {
                     YFormatter.Add(value => value.ToString("N"));
                 }
-                if (SeriesCollection.Count > 0)
-                {
-                    SeriesCollection[0] = new SeriesCollection
-                    {
-                        ls
-                    };
-                }
-                else
-                {
-                    seriesCollection.Add(new SeriesCollection
-                    {
-                        ls
-                    });
-                }
+                
                 if (CartesianChart.Count > 0) {
                     cartesianChart[0] = new CartesianChart
                     {
