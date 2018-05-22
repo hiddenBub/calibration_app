@@ -69,6 +69,8 @@ namespace calibration_app
 
         private List<List<decimal>> dataTemp = new List<List<decimal>>();
 
+        private List<string[]> dataSource = new List<string[]>();
+
         /// <summary>
         /// 连接字符串
         /// </summary>
@@ -260,6 +262,7 @@ namespace calibration_app
                 //清空缓冲区、关闭流
                 fs.Flush();
                 fs.Close();
+                spendTime = 0;
                 GatherCB.Content = GatherMenu.Header = "开始采集";
                 dispatcherTimer.Stop();
             }
@@ -418,18 +421,18 @@ namespace calibration_app
                     Column column = Setting.Gather.ColumnList[optionIndex];
 
                     int length = labels[0].Count;
-                    string lastTimeStemp = labels[0][(length) - 1];
+                    string lastTimeStamp = labels[0][(length) - 1];
                     // 将数据中的时间取出
                     DateTime dateTime = Convert.ToDateTime(datas[0]);
                     // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-                    if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
+                    if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
                     {
                         // 当两个相等时获取
-                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
+                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
                         {
                             // 将新的坐标轴时间加入Labels数组
 
-                            Labels[0].Add(Convert.ToDateTime(lastTimeStemp).AddSeconds(column.Frequency).ToString());
+                            Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(column.Frequency).ToString());
 
                             dataTemp.Clear();
                         }
@@ -497,6 +500,38 @@ namespace calibration_app
                 i++;
             }
             spendTime++;
+        }
+
+        public string[] ReadAllDatas (string filePath)
+        {
+            // 读取所有行数据
+            return File.ReadAllLines(filePath, Encoding.Default);
+        }
+
+        /// <summary>
+        /// 返回最后一行数据
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public string ReadLastData (string filePath)
+        {
+            string[] lines = ReadAllDatas(filePath);
+            return lines[lines.Length -1];
+        }
+
+        /// <summary>
+        /// 将数据存储到字段中
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="delimiter"></param>
+        public void SaveData(string filePath ,char[] delimiter)
+        {
+            string[] data = ReadAllDatas(filePath);
+            foreach (string line in data)
+            {
+                string[] column =  line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                dataSource.Add(column);
+            }
         }
 
         /// <summary>
@@ -661,12 +696,12 @@ namespace calibration_app
                         Column column = Setting.Gather.ColumnList[optionIndex];
 
                         int length = labels[0].Count;
-                        string lastTimeStemp = labels[0][(length) - 1];
+                        string lastTimeStamp = labels[0][(length) - 1];
                         // 将数据中的时间取出
                         DateTime dateTime = Convert.ToDateTime(datas[0]);
                         
                         // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) <= 0)
+                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
                         {
                             // 判断当前点是否是个正确的数据
                             for (int di = 2;di < datas.Length; di++)
@@ -691,11 +726,11 @@ namespace calibration_app
                                 
                             }
                             // 当两个相等时获取
-                            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStemp)) == 0)
+                            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
                             {
                                 // 将新的坐标轴时间加入Labels数组
 
-                                Labels[0].Add(Convert.ToDateTime(lastTimeStemp).AddSeconds(column.Frequency).ToString());
+                                Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(column.Frequency).ToString());
 
                                 // 获取临时数据存储数组项目数量                                
                                 int count = dataList.Count;
