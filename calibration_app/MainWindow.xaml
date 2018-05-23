@@ -36,7 +36,7 @@
                         <MenuItem Header="导入本地数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
                 </Menu>
-                <Button Name="ExportBtn" Content="导出图表" Click="ExportBtn_Click">
+                <Button Name="ExportBtn" Content="导出图表" Click="ExportBtn_Click" VerticalAlignment="Bottom">
                 </Button>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->

@@ -46,6 +46,7 @@ namespace calibration_app
            
         };
 
+        private List<DateTime> gatherTimer = new List<DateTime>();
 
         bool first = true;
 
@@ -70,6 +71,16 @@ namespace calibration_app
         private List<List<decimal>> dataTemp = new List<List<decimal>>();
 
         private List<string[]> dataSource = new List<string[]>();
+        
+        public enum DataType
+        {
+            SourceData = 0,
+            CalibrationData = 1,
+        };
+
+        private string dataStorage = "./DataStorage";
+
+        private string dateTimeFormat = "yyyy-MM-dd hh:mm:ss";
 
         /// <summary>
         /// 连接字符串
@@ -115,6 +126,10 @@ namespace calibration_app
         public List<Func<double, string>> YFormatter { get => yFormatter; set => yFormatter = value; }
         public List<CartesianChart> CartesianChart { get => cartesianChart; set => cartesianChart = value; }
         public Setting Setting { get => setting; set => setting = value; }
+        public string DataStorage { get => dataStorage; set => dataStorage = value; }
+        public string DateTimeFormat { get => dateTimeFormat; set => dateTimeFormat = value; }
+        public List<DateTime> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
+        public List<string[]> DataSource { get => dataSource; set => dataSource = value; }
 
         public MainWindow()
         {
@@ -230,21 +245,53 @@ namespace calibration_app
         /// <param name="state">当前是否在采集中</param>
         public void SwitchGather(bool state)
         {
+            //DateTime now = DateTime.Now;
+            //string dateTimeFormat = "yyyy-MM-dd hh:mm:ss";
+            //string timeStamp = now.ToString(dateTimeFormat) + "\r\n";
             if (!state)
             {
+               
                 // 将开始采集时间点写入到文件做记录
-                FileStream fs = new FileStream(@".\Gather.txt", FileMode.Create);
-                string start = "2018-05-09 21:16:39\r\n";
-                //获得字节数组
-                byte[] data = Encoding.Default.GetBytes(start);
+                DateTime now = new DateTime(2018,05,09,21,16,39);
+                string timeStamp = now.ToString(DateTimeFormat);
+
+
+                // 清空计时器
+                GatherTimer.Clear();
+                // 计时器写入开始时间
+                GatherTimer.Add(now);
+
+
+                StreamWriter sw = new StreamWriter(@".\Gather.txt", false);
                 //开始写入
-                fs.Write(data, 0, data.Length);
+                sw.WriteLine(timeStamp);
                 //清空缓冲区、关闭流
-                fs.Flush();
-                fs.Close();
+                sw.Flush();
+                sw.Close();
+
+
+                // 变更采集按钮显示
                 GatherCB.Content = GatherMenu.Header = "结束采集";
+
+
+                // 判断数据文件存储文件夹是否存在不存在创建文件夹
+                if (!Directory.Exists(DataStorage)) Directory.CreateDirectory(DataStorage);
+
+
+                // 设置文件名、
+                string fileName = GetFileName(DataType.SourceData, now, null);
+                List<string> header = new List<string>
+                {
+                    "\"" + string.Join("\",\"", new string[] { "TIMESTAMP","RECORD","GHI_80A","GHI_80B","GHI_80C" }) + "\"",
+                    "\"" + string.Join("\",\"", new string[] {"TS","RN","W/m2","W/m2","W/m2" }) + "\"",
+                    "\"" + string.Join("\",\"", new string[] {"","","Avg", "Avg", "Avg" }) + "\"",
+                };
+                // 创建数据文件并写入文件头
+                AddDatHeader(header, fileName);
+
                 // 重新获取图表
                 GetChart();
+
                 //定时查询-定时器
                 dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
                 dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
@@ -254,9 +301,11 @@ namespace calibration_app
             {
                 // 结束采集时将时间记录并写入文件
                 FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
-                string start = DateTime.Now.ToString() + "\r\n";
+                DateTime now = DateTime.Now;
+                string timeStamp = now.ToString(DateTimeFormat);
+                GatherTimer.Add(now);
                 //获得字节数组
-                byte[] data = System.Text.Encoding.Default.GetBytes(start);
+                byte[] data = System.Text.Encoding.Default.GetBytes(timeStamp);
                 //开始写入
                 fs.Write(data, 0, data.Length);
                 //清空缓冲区、关闭流
@@ -292,7 +341,25 @@ namespace calibration_app
             }
             // 页面载入成功后直接选择第一个选项卡
             ColTab.SelectedItem = ColTab.Items[0];
+            
+            string filePath = "./Gather.txt";
+            
 
+            if (File.Exists(filePath))
+            {
+                // 读取gather.txt文件获取起始和结束采集时间
+                StreamReader sr = new StreamReader(filePath, Encoding.Default);
+
+                // 读取第一行
+                string first = sr.ReadLine();
+                // 将数据存至采集计时器中
+                GatherTimer.Add(Convert.ToDateTime(first));
+                string second = sr.ReadLine();
+                // 结束时间
+                if (second != null) GatherTimer.Add(Convert.ToDateTime(second));
+                // 关闭streamreader
+                sr.Close();
+            }
 
             // 初始化chartZone的Grid控件
             AddCell(2, 2);
@@ -302,6 +369,43 @@ namespace calibration_app
 
         private void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
+            string dataPath = Setting.Gather.DataPath;
+            //FileStream fs = new FileStream(dataPath, FileMode.Open, FileAccess.Read);
+            //fs.Seek(0, SeekOrigin.End);
+            //fs.Seek(-1, SeekOrigin.Current);
+            //int fsLen = (int)fs.Length;
+            //byte[] heByte = new byte[fsLen];
+            //int r = fs.Read(heByte, 0, heByte.Length);
+            //string str = Encoding.UTF8.GetString(heByte);
+
+            StreamReader sr = new StreamReader(dataPath, false);
+            StringBuilder str = new StringBuilder();
+            long start_time = GetTickCount();
+            while (sr.ReadLine() != null)
+            {
+                str.Append(sr.ReadLine());
+            }
+            
+            //sr.BaseStream.Seek(0, SeekOrigin.End);
+            //ulong length = (ulong)sr.BaseStream.Length;
+            //string str = string.Empty;
+            //for (ulong i = 0;i< length;i++)
+            //{
+            //    sr.BaseStream.Seek(-1, SeekOrigin.Current);
+            //    str += sr.Read();
+            //    char[] array = str.ToCharArray();
+            //    IEnumerable<char> cs = array.Reverse<char>();
+            //    char[] array1 = cs.ToArray<char>();
+            //    str = new string(array1);
+            //    if (str.IndexOf("\t") == 0)
+            //    {
+            //        MessageBox.Show(str);
+            //        break;
+            //    }
+            //}
+            
+           
+            MessageBox.Show(str);
             //Bitmap bit = new Bitmap(Convert.ToInt32(this.ChartZone.Width), Convert.ToInt32(this.ChartZone.Height));//实例化一个和窗体一样大的bitmap
             //Graphics g = Graphics.FromImage(bit);
             //g.CompositingQuality = CompositingQuality.HighQuality;//质量设为最高
@@ -381,126 +485,192 @@ namespace calibration_app
         /// <param name="e"></param>
         private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
-            string filePath = "./Gather.txt";
-            DateTime startTime = DateTime.Now;
-            DateTime? endTime = null;
-            
-            if (File.Exists(filePath))
-            {
-                // 读取gather.txt文件获取起始和结束采集时间
-                StreamReader sr = new StreamReader(@"./Gather.txt", Encoding.Default);
-                // 定义起始时间
-                startTime = Convert.ToDateTime(sr.ReadLine());
-                // 结束时间
-                endTime = startTime.AddSeconds(spendTime);
-                sr.Close();
-            }
+           
             // 获取当前周期内的起始时间
-            string date_temp = string.Format("{0:g}", startTime);
+            string date_temp = string.Format("{0:g}", GatherTimer[0]);
             date_temp += ":00";
             // 获取当前周期内的频率
             double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
             int i = 1;
             // 获取数据
             string dataPath = Setting.Gather.DataPath;
-            string[] data = File.ReadAllLines(dataPath, Encoding.Default);
-            foreach (string line in data)
-            {
-                bool correct = true;
-                if (i >= 5)
-                {
-                    // 存储当前行
-                    string a = line;
-                    // 设置分割字符
-                    char[] sp = { ',', '"' };
-                    // 存储数据型
-                    string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-                    if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
+            //StreamReader sr = new StreamReader(dataPath, false);
+            //sr.BaseStream.Seek(0, SeekOrigin.End);
+            //string str = streamReader.ReadToEnd();
+            //FileStream fs = new FileStream(dataPath, FileMode.Open, FileAccess.Read);
+            //fs.Seek(0, SeekOrigin.End);
+            //fs.Seek(-1, SeekOrigin.Current);
+            //int fsLen = (int)fs.Length;
+            //byte[] heByte = new byte[fsLen];
+            //int r = fs.Read(heByte, 0, heByte.Length);
+            //string myStr = Encoding.UTF8.GetString(heByte);
+
+            string data = ReadLastData(dataPath);
+            //foreach (string line in data)
+            //{
+            //    bool correct = true;
+            //    if (i >= 5)
+            //    {
+            //        // 存储当前行
+            //        string a = line;
+            //        // 设置分割字符
+            //        char[] sp = { ',', '"' };
+            //        // 存储数据型
+            //        string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+            //        if (GatherTimer[1] != null && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) break;
                     
-                    // 获取当前选择选项卡的数据模型
-                    Column column = Setting.Gather.ColumnList[optionIndex];
+            //        // 获取当前选择选项卡的数据模型
+            //        Column column = Setting.Gather.ColumnList[optionIndex];
 
-                    int length = labels[0].Count;
-                    string lastTimeStamp = labels[0][(length) - 1];
-                    // 将数据中的时间取出
-                    DateTime dateTime = Convert.ToDateTime(datas[0]);
-                    // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-                    if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
-                    {
-                        // 当两个相等时获取
-                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
-                        {
-                            // 将新的坐标轴时间加入Labels数组
+            //        int length = labels[0].Count;
+            //        string lastTimeStamp = labels[0][(length) - 1];
+            //        // 将数据中的时间取出
+            //        DateTime dateTime = Convert.ToDateTime(datas[0]);
+            //        // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
+            //        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
+            //        {
+            //            // 当两个相等时获取
+            //            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
+            //            {
+            //                // 将新的坐标轴时间加入Labels数组
 
-                            Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(column.Frequency).ToString());
+            //                Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(column.Frequency).ToString());
 
-                            dataTemp.Clear();
-                        }
-                        for (int di = 2; di < datas.Length; di++)
-                        {
-                            if (!decimal.TryParse(datas[di], out decimal x))
-                            {
-                                correct = false;
-                                continue;
-                            }
-                            int scIndex = di - 2;
+            //                dataTemp.Clear();
+            //            }
+            //            for (int di = 2; di < datas.Length; di++)
+            //            {
+            //                if (!decimal.TryParse(datas[di], out decimal x))
+            //                {
+            //                    correct = false;
+            //                    continue;
+            //                }
+            //                int scIndex = di - 2;
 
-                            // 将取得的数据存入
-                            if (dataTemp.Count > scIndex)
-                            {
-                                dataTemp[scIndex].Add(x);
-                            }
-                            else
-                            {
-                                dataTemp.Add(new List<decimal> { x });
-                            }
-
-
-                        }
-                        // 继续跳出循环
-                        if (!correct) continue;
-                        // 获取临时数据存储数组项目数量                                
-                        int count = dataTemp.Count;
-                        for (int dli = 0; dli < count; dli++)
-                        {
-                            int dcount = dataTemp[dli].Count;
-                            // 对数据进行求和
-                            decimal sum = dataTemp[dli].Sum();
-                            if (SeriesCollection[0][dli].Values.Count > 0 && dataTemp[dli].Count > 1)
-                            {
-                                SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
-                            }
-                            SeriesCollection[0][dli].Values.Add(Convert.ToDouble(sum / dcount));
+            //                // 将取得的数据存入
+            //                if (dataTemp.Count > scIndex)
+            //                {
+            //                    dataTemp[scIndex].Add(x);
+            //                }
+            //                else
+            //                {
+            //                    dataTemp.Add(new List<decimal> { x });
+            //                }
 
 
-                        }
+            //            }
+            //            // 继续跳出循环
+            //            if (!correct) continue;
+            //            // 获取临时数据存储数组项目数量                                
+            //            int count = dataTemp.Count;
+            //            for (int dli = 0; dli < count; dli++)
+            //            {
+            //                int dcount = dataTemp[dli].Count;
+            //                // 对数据进行求和
+            //                decimal sum = dataTemp[dli].Sum();
+            //                if (SeriesCollection[0][dli].Values.Count > 0 && dataTemp[dli].Count > 1)
+            //                {
+            //                    SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
+            //                }
+            //                SeriesCollection[0][dli].Values.Add(Convert.ToDouble(sum / dcount));
+
+
+            //            }
                         
-                        //// 根据当前选项卡的设置获取正确的数据
-                        //if (column.Method.ToLower() == "avg")
-                        //{
-                        //    if (SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
-                        //    {
-                        //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
-                        //    }
-                        //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum / count));
-                        //}
-                        //else if (column.Method.ToLower() == "sum")
-                        //{
-                        //    if(SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
-                        //    {
-                        //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
-                        //    }
-                        //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum));
-                        //}
+            //            //// 根据当前选项卡的设置获取正确的数据
+            //            //if (column.Method.ToLower() == "avg")
+            //            //{
+            //            //    if (SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+            //            //    {
+            //            //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+            //            //    }
+            //            //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum / count));
+            //            //}
+            //            //else if (column.Method.ToLower() == "sum")
+            //            //{
+            //            //    if(SeriesCollection[0][0].Values.Count > 0 && dataTemp.Count > 1)
+            //            //    {
+            //            //        SeriesCollection[0][0].Values.RemoveAt(SeriesCollection[0][0].Values.Count - 1);
+            //            //    }
+            //            //    SeriesCollection[0][0].Values.Add(Convert.ToDouble(sum));
+            //            //}
                         
                         
-                    }
+            //        }
                     
-                }
-                i++;
-            }
+            //    }
+            //    i++;
+            //}
             spendTime++;
         }
+        #region 自定义函数开始
+
+        /// <summary>
+        /// 获取文件名
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="startTime"></param>
+        /// <param name="endTime"></param>
+        /// <returns></returns>
+        public string GetFileName (DataType type,DateTime startTime ,DateTime? endTime)
+        {
+            // 生成一个空字符串
+            string result = string.Empty;
+            // 依据数据类型生成文件名
+            switch (type)
+            {
+                case DataType.SourceData:
+                    result = Setting.Project.Name + "_" + DataType.SourceData.ToString() + "_" + startTime.ToString();
+                    break;
+                case DataType.CalibrationData:
+                    result = Setting.Project.Name + "_" + DataType.CalibrationData.ToString() + "_" + startTime.ToString();
+                    break;
+            }
+            // 判断是否传入了结束时间
+            if (endTime != null) result += "_" + endTime.ToString();
+            //result += extension;
+            // 返回文件名
+            return result;
+        }
+
+        /// <summary>
+        /// 为dat文件添加文件头
+        /// </summary>
+        /// <param name="header"></param>
+        /// <param name="fileName"></param>
+        public void AddDatHeader (List<string> header,string fileName)
+        {
+            // 布置文件以及文件所在目录
+            fileName = dataStorage + @"/" + fileName + ".dat";
+            // 要生成的文件不存在
+            if (!File.Exists(fileName))
+            {
+                // 创建写入对象
+                StreamWriter sw = new StreamWriter(fileName, false);
+                // 将文件头中所有数据写入文件
+                foreach (string str in header)
+                {
+                    // 写入一整行
+                    sw.WriteLine(str);
+                }
+                // 关闭文件
+                sw.Close();
+            }
+            
+            // filename = "北控项目_SourceData_2018-5-23 10:39:21_2018-5-24 17:00:00.dat"
+        }
+
+        public bool IsDatHeader (string[] line)
+        {
+            
+            bool result = false;
+            return result;
+        }
+
+        //public List<string[]> GetDatHeader ()
+        //{
+
+        //}
 
         public string[] ReadAllDatas (string filePath)
         {
@@ -520,19 +690,79 @@ namespace calibration_app
         }
 
         /// <summary>
+        /// 求指定数组中的所有值的平均值
+        /// </summary>
+        /// <param name="arr"></param>
+        /// <returns></returns>
+        public double GetAvg(List<decimal> arr)
+        {
+            int count = arr.Count;
+            decimal sum = arr.Sum();
+            return Convert.ToDouble(sum / count);
+        }
+        //public string[] SaveData ()
+
+        /// <summary>
         /// 将数据存储到字段中
         /// </summary>
         /// <param name="filePath"></param>
         /// <param name="delimiter"></param>
-        public void SaveData(string filePath ,char[] delimiter)
+        public void SaveAllData(string filePath ,char[] delimiter)
         {
             string[] data = ReadAllDatas(filePath);
             foreach (string line in data)
             {
                 string[] column =  line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-                dataSource.Add(column);
+                DataSource.Add(column);
             }
         }
+
+        /// <summary>
+        /// 将指定类型的数据添加至数组中，
+        /// </summary>
+        /// <typeparam name="T">数组中指定的类型</typeparam>
+        /// <param name="variable">数组变量</param>
+        /// <param name="item">数组中需要更改的数据</param>
+        /// /// <param name="index">数组中需要更改的索引</param>
+        /// <returns></returns>
+        public List<T> AddItem<T>(List<T> variable, T item, int index)
+        {
+            /*判断数组的长度*/
+            // 如果数组长度大于需要更改的索引值，则说明该索引存在
+            if (variable.Count > index)
+            {
+                // 更改该项目
+                variable[index] = item;
+            }
+            // 小于则说明该索引不存在
+            else
+            {
+                // 添加该索引至数组
+                variable.Add(item);
+            }
+            // 将数组返回
+            return variable;
+        }
+
+        public List<T> AddItem<T> (List<T> variable, T item)
+        {
+            /*判断数组的长度*/
+            // 如果数组长度大于需要更改的索引值，则说明该索引存在
+            if (variable.Count > 0)
+            {
+                // 更改该项目
+                variable[0] = item;
+            }
+            // 小于则说明该索引不存在
+            else
+            {
+                // 添加该索引至数组
+                variable.Add(item);
+            }
+            // 将数组返回
+            return variable;
+        }
+
 
         /// <summary>
         /// 为表格ChartZone填充行列
@@ -551,7 +781,7 @@ namespace calibration_app
                 ChartZone.ColumnDefinitions.Add(new ColumnDefinition());
             }
         }
-
+        #endregion 自定义函数结束
 
         private void GetChart()
         {
