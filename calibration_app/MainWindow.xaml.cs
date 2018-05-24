@@ -283,6 +283,7 @@ namespace calibration_app
                 string fileName = GetFileName(DataType.SourceData, now, null);
                 List<string> header = new List<string>
                 {
+                    "\"" + string.Join("\",\"", new string[] { Setting.Project.Name,Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString()}) + "\"",
                     "\"" + string.Join("\",\"", new string[] { "TIMESTAMP","RECORD","GHI_80A","GHI_80B","GHI_80C" }) + "\"",
                     "\"" + string.Join("\",\"", new string[] {"TS","RN","W/m2","W/m2","W/m2" }) + "\"",
                     "\"" + string.Join("\",\"", new string[] {"","","Avg", "Avg", "Avg" }) + "\"",
@@ -576,7 +577,8 @@ namespace calibration_app
             result += "_" + DateFormat(startTime);
             // 判断是否传入了结束时间
             if (endTime != null) result += "_" + DateFormat((DateTime)endTime);
-            //result += extension;
+            result += ".dat";
+            result = DataStorage + "/" + result;
             // 返回文件名
             return result;
         }
@@ -900,7 +902,7 @@ namespace calibration_app
 
                 int i = 1;
                 // 获取数据
-                string dataPath = Setting.Gather.DataPath;
+                string dataPath = GetFileName(DataType.SourceData,startTime,endTime);
                 string[] data = File.ReadAllLines(dataPath, Encoding.Default);
                 // 设置曲线对象
 
@@ -929,9 +931,10 @@ namespace calibration_app
                                 Values = new ChartValues<double> { },                // 初始化数据集
                                 PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
                             };
+                        
                             if (SeriesCollection.Count > 0)
                             {
-
+                            
                                 if (SeriesCollection[0].Count >= count)
                                 {
                                     seriesCollection[0][index] = ls;
@@ -959,7 +962,10 @@ namespace calibration_app
 
 
                     }
-                    else if (i == 5)
+                   
+                    else if (i >= 5)
+                    {
+                    if (i == 5)
                     {
                         // 数据记录开始时间有可能大于当前时间段，将时间对扩大查找至当前分钟内后几段
                         int time = 1;
@@ -978,12 +984,9 @@ namespace calibration_app
                         }
 
                     }
-                    else if (i > 5)
-                    {
-
-
-                        // 如果时间数据越界中断循环
-                        if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
+                    
+                    // 如果时间数据越界中断循环
+                    if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
                         // 获取当前选择选项卡的数据模型
                         Column column = Setting.Gather.ColumnList[optionIndex];
 
