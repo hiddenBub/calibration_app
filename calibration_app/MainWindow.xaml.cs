@@ -79,9 +79,9 @@ namespace calibration_app
             CalibrationData = 1,
         };
 
-        private string dataStorage = "./DataStorage";
+        private string dataStorage = Environment.CurrentDirectory.ToString() + "\\DataStorage";
 
-        private string dateTimeFormat = "yyyy-MM-dd hh:mm:ss";
+        private string dateTimeFormat = "yyyy-MM-dd hh：mm：ss";
 
         /// <summary>
         /// 连接字符串
@@ -158,26 +158,33 @@ namespace calibration_app
             {
                 MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
             }
-            //else
-            //{
-            //    //打开一个文件选择框
-            //    OpenFileDialog ofd = new OpenFileDialog();
-            //    ofd.Title = "Excel文件";
-            //    ofd.FileName = "";
-            //    ofd.Filter = "Excel文件(*.xls)|*";
-            //    DataTable dt = new DataTable();
-            //    string filePath = Application.StartupPath + @"\Skills_TreeView\Skills.xls";
-
-            //    string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
-            //    using (OleDbConnection conn = new OleDbConnection(strConn))
-            //    {
-            //        conn.Open();
-            //        string strExcel = "select * from [sheet1$]";
-            //        OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
-            //        myCommand.Fill(dt);
-            //    }
-            //    return dt;
-            //}
+            else if (!IsGathering && GatherTimer.Count ==2 && GatherTimer[1] != null )
+            {
+                //打开一个文件选择框
+                OpenFileDialog ofd = new OpenFileDialog
+                {
+                    Title = "Excel文件",
+                    FileName = "",
+                    Filter = "Excel文件(*.xls)|*"
+                };
+               
+                string filePath = ofd.FileName;
+                MessageBox.Show(filePath);
+                //DataTable dt = new DataTable();
+                //string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
+                //using (OleDbConnection conn = new OleDbConnection(strConn))
+                //{
+                //    conn.Open();
+                //    string strExcel = "select * from [sheet1$]";
+                //    OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
+                //    myCommand.Fill(dt);
+                //}
+                
+            }
+            else
+            {
+                MessageBox.Show("请先采集源数据后再导入数据", "错误");
+            }
         }
         //private void ImportDataMenu_Click(object sender, RoutedEventArgs e)
         //{
@@ -254,7 +261,7 @@ namespace calibration_app
 
                 // 将开始采集时间点写入到文件做记录
                 DateTime now = new DateTime(2018, 05, 09, 21, 16, 39);
-                string timeStamp = DateFormat(now);
+                string timeStamp = DateFormat(now,"yyyy-MM-dd HH:mm:ss");
 
 
                 // 清空计时器
@@ -292,7 +299,7 @@ namespace calibration_app
                 AddDatHeader(header, fileName);
 
                 // 重新获取图表
-                GetChart();
+                InitChart(header);
 
                 //定时查询-定时器
                 dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
@@ -303,7 +310,7 @@ namespace calibration_app
             {
                 // 结束采集时将时间记录并写入文件
                 DateTime now = DateTime.Now;
-                string timeStamp = now.ToString(DateTimeFormat);
+                string timeStamp = DateFormat(now, "yyyy-MM-dd HH:mm:ss");
                 GatherTimer.Add(now);
                 FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
                
@@ -357,7 +364,7 @@ namespace calibration_app
             if (File.Exists(filePath))
             {
                 // 读取gather.txt文件获取起始和结束采集时间
-                StreamReader sr = new StreamReader(filePath, Encoding.Default);
+                StreamReader sr = new StreamReader(filePath, Encoding.UTF8);
 
                 // 读取第一行
                 string first = sr.ReadLine();
@@ -373,8 +380,10 @@ namespace calibration_app
             // 初始化chartZone的Grid控件
             AddCell(2, 2);
 
-            //GetChart();
+            GetChart();
         }
+
+        
 
         private void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -479,14 +488,18 @@ namespace calibration_app
            
             StringBuilder sb = new StringBuilder();
             long newPos = InverseReadRow(fs, fs.Length,ref sb);
-            
+            fs.Close();
             // 存储当前行
             string a = sb.ToString();
             // 设置分割字符
-            char[] sp = { ',', '"' };
+            char[] sp = { ',', '"' ,'\r','\n'};
             // 存储数据型
             string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-            if (GatherTimer[1] != null && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
+            string date = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0];
+            DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
+            DateTime latest = Convert.ToDateTime(date + " 19:00:00");
+            if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
+            if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
 
             //// 获取当前选择选项卡的数据模型
             //Column column = Setting.Gather.ColumnList[optionIndex];
@@ -495,7 +508,7 @@ namespace calibration_app
             // 将数据中的时间取出
             DateTime dateTime = Convert.ToDateTime(datas[0]);
             // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
+            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) >= 0)
             {
                 for (int di = 2; di < datas.Length; di++)
                 {
@@ -509,36 +522,51 @@ namespace calibration_app
                     DataTemp = AddSonItem<Decimal>(DataTemp, x, scIndex);
 
                 }
-                // 当两个相等时获取
-                if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
-                {
-                    // 将新的坐标轴时间加入Labels数组
-
-                    Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
-
-                    DataTemp.Clear();
-                }
-                
-
-
                 // 获取临时数据存储数组项目数量                                
                 int count = DataTemp.Count;
+                double[] avg = new double[datas.Length - 2];
                 for (int dli = 0; dli < count; dli++)
                 {
                     // 使用均值方法获取均值
-                    double avg = GetAvg(DataTemp[dli]);
+                    avg[dli] = GetAvg(DataTemp[dli]);
                     // 数据列中当前列的数量大于0 并且dataTemp中对应数据多于1的时候将数据列中的该点移除
                     if (SeriesCollection[0][dli].Values.Count > 0 && DataTemp[dli].Count > 1)
                     {
                         SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
                     }
                     // 添加当前的点进入数组
-                    SeriesCollection[0][dli].Values.Add(avg);
-                    
+                    SeriesCollection[0][dli].Values.Add(avg[dli]);
                 }
+                string fn = GetFileName(DataType.SourceData, GatherTimer[0], null);
+                FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
+                string[] column = new string[datas.Length];
+                column[0] = "\"" + datas[0] + "\"";
+                column[1] = spendTime.ToString();
+                for (int key = 0; key < avg.Length; key++)
+                {
+                    column[key + 2] = avg[key].ToString();
+                }
+                string line = string.Join(",",column) + Environment.NewLine;
+                byte[] by = Encoding.Default.GetBytes(line);
+                fileStream.Write(by, 0, by.Length);
+                fileStream.Close();
+                spendTime++;
+                // 当两个相等时获取
+                if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
+                {
+                    // 将新的坐标轴时间加入Labels数组
+
+                    Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
+                   
+                    DataTemp.Clear();
+                }
+                
+
+
+                
 
             }
-            
+            fs.Close();
         }
         #region 自定义函数开始
 
@@ -548,7 +576,7 @@ namespace calibration_app
         /// <param name="time"></param>
         /// <param name="format"></param>
         /// <returns></returns>
-        public string DateFormat (DateTime time,string format = "yyyy-MM-dd hh:mm:ss")
+        public string DateFormat (DateTime time,string format = "yyyy-MM-dd HH：mm：ss")
         {
             return time.ToString(format);
         }
@@ -578,7 +606,7 @@ namespace calibration_app
             // 判断是否传入了结束时间
             if (endTime != null) result += "_" + DateFormat((DateTime)endTime);
             result += ".dat";
-            result = DataStorage + "/" + result;
+            result = DataStorage + "\\" + result;
             // 返回文件名
             return result;
         }
@@ -590,19 +618,19 @@ namespace calibration_app
         /// <param name="fileName"></param>
         public void AddDatHeader(List<string> header, string fileName)
         {
-            // 布置文件以及文件所在目录
-            fileName = dataStorage + @"/" + fileName + ".dat";
+            
             // 要生成的文件不存在
             if (!File.Exists(fileName))
             {
                 // 创建写入对象
-                StreamWriter sw = new StreamWriter(fileName, false);
+                StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
                 // 将文件头中所有数据写入文件
                 foreach (string str in header)
                 {
                     // 写入一整行
                     sw.WriteLine(str);
                 }
+                sw.Flush();
                 // 关闭文件
                 sw.Close();
             }
@@ -790,6 +818,7 @@ namespace calibration_app
             // 将数组返回
             return variable;
         }
+       
 
 
         /// <summary>
@@ -823,6 +852,92 @@ namespace calibration_app
             YFormatter.Clear();
             // 重置X轴标签
             Labels.Clear();
+        }
+
+        private void InitChart(List<string> datasList,bool isAddLabel = true)
+        {
+            ClearChartElement();
+
+            // 固定取第二行的数据（此行为列名数据）
+            string title = datasList[1];
+            string[] data = title.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            int count = data.Length;
+
+            for (int startIndex = 2; startIndex < count; startIndex++)
+            {
+                LineSeries ls = new LineSeries
+                {
+                    Title = data[startIndex],// 设置集合标题
+                    Values = new ChartValues<double> { },                // 初始化数据集
+                    PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                };
+
+                if (SeriesCollection.Count > 0)
+                {
+
+                    if (SeriesCollection[0].Count > startIndex - 2)
+                    {
+                        seriesCollection[0][startIndex - 2] = ls;
+                    }
+                    else
+                    {
+                        SeriesCollection[0].Add(ls);
+                    }
+
+                }
+                else
+                {
+                    seriesCollection.Add(new SeriesCollection { });
+                    if (SeriesCollection[0].Count > startIndex - 2)
+                    {
+                        seriesCollection[0][startIndex - 2] = ls;
+                    }
+                    else
+                    {
+                        SeriesCollection[0].Add(ls);
+                    }
+                }
+            }
+            Labels = AddItem<List<string>>(Labels, new List<string> {  });
+            // 判断是否需要初始化标签
+            if (isAddLabel)
+            {
+                Labels = AddSonItem<string>(Labels, ChartStartFormat(GatherTimer[0], 60).ToString(), 0);
+            }
+            // Y轴的轴标签显示结构
+            YFormatter = AddItem<Func<double, string>>(YFormatter, value => value.ToString("N"));
+            CartesianChart cartesian = new CartesianChart
+            {
+                Series = SeriesCollection[0],
+                LegendLocation = LegendLocation.Right,
+                AxisY = new AxesCollection
+                {
+                    new Axis{
+                        Title = "辐射强度,单位W/m²",
+                        LabelFormatter = YFormatter[0],
+                    }
+                },
+                AxisX = new AxesCollection
+                {
+                    new Axis
+                    {
+                        Title = "时间",
+                        Labels = Labels[0]
+                    }
+                }
+            };
+            CartesianChart = AddItem<CartesianChart>(CartesianChart, cartesian);
+
+            
+
+            // 将图表实例添加至ChartZone这个grid中去
+            ChartZone.Children.Add(cartesianChart[0]);
+            // 设定图表合并行参数
+            CartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
+            // 设定图表合并列参数
+            CartesianChart[0].SetValue(Grid.ColumnSpanProperty, 2);
+
         }
 
         private DateTime ChartStartFormat(DateTime startTime, int frequency)
@@ -884,233 +999,109 @@ namespace calibration_app
             
             string filepath = GetFileName(DataType.CalibrationData,GatherTimer[0],GatherTimer[1]);
 
-            // 清除图表数据
-            ClearChartElement();
+            // 起始时间
+            DateTime startTime = GatherTimer[0];
+            // 结束时间
+            DateTime? endTime = GatherTimer[1];
+
+            // 获取当前周期内的起始时间
+            string date_temp = string.Format("{0:g}", startTime);
+            date_temp += ":00";
+            // 获取当前周期内的频率
+            double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
             
+            // 获取数据
+            string dataPath = GetFileName(DataType.SourceData, startTime, endTime);
+            string[] dataList = File.ReadAllLines(dataPath, Encoding.Default);
+            // 设置曲线对象
+            string[] dataHeader = dataList.Take(5).ToArray();
+            string[] dataBody = dataList.Skip(4).ToArray();
+            List<string> header = new List<string>(dataHeader);
+            InitChart(header,false);
+            // 临时数据存储数组
+            List<List<decimal>> dataTemp = new List<List<decimal>>();
+            // 遍历源数据，并按照需校准数据进行调整
+            foreach (string line in dataBody)
+            {
+                // 存储当前行
+                string a = line;
+                // 设置分割字符
+                char[] sp = { ',', '"' };
+                // 存储数据型
+                string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
+                // 数据正确判断依据
+                bool correct = true;
+                string date = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0];
+                DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
+                DateTime latest = Convert.ToDateTime(date + " 19:00:00");
+                if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) continue;
+                // 如果时间数据越界中断循环
+                if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
+                //// 获取当前选择选项卡的数据模型
+                //Column column = Setting.Gather.ColumnList[optionIndex];
 
-                
-                // 起始时间
-                DateTime startTime = GatherTimer[0];
-                // 结束时间
-                DateTime? endTime = GatherTimer[1];
-                
-                // 获取当前周期内的起始时间
-                string date_temp = string.Format("{0:g}", startTime);
-                date_temp += ":00";
-                // 获取当前周期内的频率
-                double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
+                //int length = labels[0].Count;
+                //string lastTimeStamp = labels[0][(length) - 1];
+                //// 将数据中的时间取出
+                //DateTime dateTime = Convert.ToDateTime(datas[0]);
 
-                int i = 1;
-                // 获取数据
-                string dataPath = GetFileName(DataType.SourceData,startTime,endTime);
-                string[] data = File.ReadAllLines(dataPath, Encoding.Default);
-                // 设置曲线对象
+                // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
 
-                // 临时数据存储数组
-                List<List<decimal>> dataList = new List<List<decimal>>();
-                // 遍历源数据，并按照需校准数据进行调整
-                foreach (string line in data)
+                // 判断当前点是否是个正确的数据
+
+
+
+
+
+
+
+
+                // 获取临时数据存储数组项目数量                                
+                int count = datas.Length;
+                for (int dli = 2; dli < count; dli++)
                 {
-                    // 存储当前行
-                    string a = line;
-                    // 设置分割字符
-                    char[] sp = { ',', '"' };
-                    // 存储数据型
-                    string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-                    // 数据正确判断依据
-                    bool correct = true;
-                    if (i == 2)
+                    if (!decimal.TryParse(datas[dli], out decimal x))
                     {
-                        for (int di = 2; di < datas.Length; di++)
-                        {
-                            int count = di - 1;
-                            int index = di - 2;
-                            LineSeries ls = new LineSeries
-                            {
-                                Title = datas[di],// 设置集合标题
-                                Values = new ChartValues<double> { },                // 初始化数据集
-                                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
-                            };
-                        
-                            if (SeriesCollection.Count > 0)
-                            {
-                            
-                                if (SeriesCollection[0].Count >= count)
-                                {
-                                    seriesCollection[0][index] = ls;
-                                }
-                                else
-                                {
-                                    SeriesCollection[0].Add(ls);
-                                }
-
-                            }
-                            else
-                            {
-                                seriesCollection.Add(new SeriesCollection { });
-                                if (SeriesCollection[0].Count >= di)
-                                {
-                                    seriesCollection[0][index] = ls;
-                                }
-                                else
-                                {
-                                    SeriesCollection[0].Add(ls);
-                                }
-                            }
-                        }
-
-
-
-                    }
-                   
-                    else if (i >= 5)
-                    {
-                    if (i == 5)
-                    {
-                        // 数据记录开始时间有可能大于当前时间段，将时间对扩大查找至当前分钟内后几段
-                        int time = 1;
-
-                        // 如果当前时间段处于数据时间左侧则将time+1
-                        while (DateTime.Compare(Convert.ToDateTime(date_temp).AddSeconds(fre * time), Convert.ToDateTime(datas[0])) < 0) time++;
-
-                        // 进入到此处时说明时间段处于数据时间右侧，可以正确的进入循环
-                        if (labels.Count > 0)
-                        {
-                            Labels[0] = new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() };
-                        }
-                        else
-                        {
-                            Labels.Add(new List<string> { Convert.ToDateTime(date_temp).AddSeconds(fre * time).ToString() });
-                        }
-
-                    }
-                    
-                    // 如果时间数据越界中断循环
-                    if (endTime != null && (DateTime.Compare(Convert.ToDateTime(endTime), Convert.ToDateTime(datas[0])) < 0)) break;
-                        // 获取当前选择选项卡的数据模型
-                        Column column = Setting.Gather.ColumnList[optionIndex];
-
-                        int length = labels[0].Count;
-                        string lastTimeStamp = labels[0][(length) - 1];
-                        // 将数据中的时间取出
-                        DateTime dateTime = Convert.ToDateTime(datas[0]);
-
-                        // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-                        if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
-                        {
-                            // 判断当前点是否是个正确的数据
-                            for (int di = 2; di < datas.Length; di++)
-                            {
-                                if (!decimal.TryParse(datas[di], out decimal x))
-                                {
-                                    correct = false;
-                                    continue;
-                                }
-                                int scIndex = di - 2;
-
-                                // 将取得的数据存入
-                                if (dataList.Count > scIndex)
-                                {
-                                    dataList[scIndex].Add(x);
-                                }
-                                else
-                                {
-                                    dataList.Add(new List<decimal> { x });
-                                }
-
-
-                            }
-                            // 当两个相等时获取
-                            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
-                            {
-                                // 将新的坐标轴时间加入Labels数组
-
-                                Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(column.Frequency).ToString());
-
-                                // 获取临时数据存储数组项目数量                                
-                                int count = dataList.Count;
-                                for (int dli = 0; dli < count; dli++)
-                                {
-                                    int dcount = dataList[dli].Count;
-                                    // 对数据进行求和
-                                    decimal sum = dataList[dli].Sum();
-
-                                    SeriesCollection[0][dli].Values.Add(Convert.ToDouble(sum / dcount));
-
-                                }
-
-
-                                dataList.Clear();
-                            }
-                            if (!correct) continue;
-
-                        }
-
+                        correct = false;
+                        break;
                     }
 
-                    i++;
-                }
-                // Y轴的轴标签显示结构
-                if (YFormatter.Count > 0)
-                {
-                    YFormatter[0] = value => value.ToString("N");
-                }
-                else
-                {
-                    YFormatter.Add(value => value.ToString("N"));
+
+
+                    SeriesCollection[0][dli -2].Values.Add(Convert.ToDouble(datas[dli]));
+
                 }
 
-                if (CartesianChart.Count > 0)
-                {
-                    cartesianChart[0] = new CartesianChart
-                    {
-                        Series = SeriesCollection[0],
-                        LegendLocation = LegendLocation.Right,
-                        AxisY = new AxesCollection {
-                    new Axis{
-                        Title = "辐射强度,单位W/m²",
-                        LabelFormatter = YFormatter[0],
-                    }
-                },
-                        AxisX = new AxesCollection
-                    {
-                        new Axis
-                        {
-                            Title = "时间",
-                            Labels = Labels[0]
-                        }
-                    }
-                    };
-                }
-                else
-                {
-                    cartesianChart.Add(new CartesianChart
-                    {
-                        Series = SeriesCollection[0],
-                        LegendLocation = LegendLocation.Right,
-                        AxisY = new AxesCollection {
-                    new Axis{
-                        Title = "辐射强度,单位W/m²",
-                        LabelFormatter = YFormatter[0],
-                    }
-                },
-                        AxisX = new AxesCollection
-                    {
-                        new Axis
-                        {
-                            Title = "时间",
-                            Labels = Labels[0]
-                        }
-                    }
-                    });
-                }
+                if (!correct) continue;
+                // 将新的坐标轴时间加入Labels数组
 
-                // 将图表实例添加至ChartZone这个grid中去
-                ChartZone.Children.Add(cartesianChart[0]);
-                // 设定图表合并行参数
-                cartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
-                // 设定图表合并列参数
-                cartesianChart[0].SetValue(Grid.ColumnSpanProperty, 2);
+                Labels[0].Add(datas[0]);
+
+
+
+
+
+
+
+
+
+
+            }
+
+
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (IsGather)
+            {
+                MessageBoxResult a = MessageBox.Show("程序正在采集中，是否结束采集", "警告", MessageBoxButton.OKCancel);
+                if (a == MessageBoxResult.OK)
+                {
+                    SwitchGather(isGather);
+                }
+               
+            }
             
         }
     }
