@@ -22,9 +22,12 @@ namespace calibration_app
             if ((dialogResult.HasValue == true) &&
                 (dialogResult.Value == true))
             {
+                // 判断是否是第一次进入程序
                 bool isfirst =  ProjectSetting.IsFirst();
+                // 第一次启动则调起启动配置窗口
                 if (isfirst)
                 {
+                    
                     SetupWindow setup = new SetupWindow();
                     bool? res = setup.ShowDialog();
                     if ((res != true) ||

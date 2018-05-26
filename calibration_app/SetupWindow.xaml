@@ -41,8 +41,7 @@
                         <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true" PreviewKeyDown="GridGather_PreviewKeyDown" LoadingRow="GridGather_LoadingRow" InitializingNewItem="GridGather_InitializingNewItem" Loaded="GridGather_Loaded">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
-                                <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:ColumnSetting.DataType}"  
-                                        SelectedItemBinding="{Binding Type,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="设备灵敏度" Binding="{Binding Frequency}"></DataGridTextColumn>
                                 <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
                                 <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:ColumnSetting.CalculateMethod}"  
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>

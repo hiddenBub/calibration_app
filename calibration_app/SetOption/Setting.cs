@@ -60,8 +60,8 @@ namespace calibration_app.SetOption
         public int Index { get; set; }
         [XmlAttribute(AttributeName = "Name")]
         public string Name { get; set; }
-        [XmlAttribute(AttributeName = "Type")]
-        public string Type { get; set; }
+        [XmlAttribute(AttributeName = "Sensitivity")]
+        public double Sensitivity { get; set; }
         [XmlAttribute(AttributeName = "Frequency")]
         public int Frequency { get; set; }
         [XmlAttribute(AttributeName = "Method")]

@@ -1048,14 +1048,7 @@ namespace calibration_app
                 // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
 
                 // 判断当前点是否是个正确的数据
-
-
-
-
-
-
-
-
+                
                 // 获取临时数据存储数组项目数量                                
                 int count = datas.Length;
                 for (int dli = 2; dli < count; dli++)
@@ -1065,9 +1058,7 @@ namespace calibration_app
                         correct = false;
                         break;
                     }
-
-
-
+                    
                     SeriesCollection[0][dli -2].Values.Add(Convert.ToDouble(datas[dli]));
 
                 }
@@ -1076,16 +1067,7 @@ namespace calibration_app
                 // 将新的坐标轴时间加入Labels数组
 
                 Labels[0].Add(datas[0]);
-
-
-
-
-
-
-
-
-
-
+                
             }
 
 
