@@ -49,6 +49,29 @@ namespace calibration_app
         /// <param name="e"></param>
         private void ConfirmBtn_Click(object sender, RoutedEventArgs e)
         {
+            if (TbProName.Text == "")
+            {
+                MessageBox.Show("项目名称不能为空");
+                return;
+            }
+
+            if (TbProLng.Text == "" || TbProLat.Text == "")
+            {
+                MessageBox.Show("项目地理位置信息不能为空");
+                return;
+            }
+
+            if (FileName == null)
+            {
+                MessageBox.Show("必须设置采集源文件路径");
+                return;
+            }
+
+            if (ColumnList[0].Name == null || ColumnList[0].Sensitivity == 0 || ColumnList[0].Frequency == 0)
+            {
+                MessageBox.Show("请设置需校准的数据");
+                return;
+            }
             // 项目设置
             Project project = new Project
             {
