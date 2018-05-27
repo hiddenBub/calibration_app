@@ -46,7 +46,7 @@ namespace calibration_app
 
         };
 
-        private List<DateTime> gatherTimer = new List<DateTime>();
+        private List<DateTime?> gatherTimer = new List<DateTime?> {  new DateTime(), new DateTime() };
 
         bool first = true;
 
@@ -118,6 +118,7 @@ namespace calibration_app
         /// </summary>
         private List<List<string>> labels = new List<List<string>>();
 
+
         /// <summary>
         /// 图标内Y轴数据格式化LIST
         /// </summary>
@@ -129,7 +130,7 @@ namespace calibration_app
         public Setting Setting { get => setting; set => setting = value; }
         public string DataStorage { get => dataStorage; set => dataStorage = value; }
         public string DateTimeFormat { get => dateTimeFormat; set => dateTimeFormat = value; }
-        public List<DateTime> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
+        public List<DateTime?> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
         public List<string[]> DataSource { get => dataSource; set => dataSource = value; }
 
         public MainWindow()
@@ -158,7 +159,7 @@ namespace calibration_app
             {
                 MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
             }
-            else if (!IsGathering && GatherTimer.Count ==2 && GatherTimer[1] != null )
+            else if (!IsGathering && GatherTimer.Count == 2 && GatherTimer[1] != null )
             {
                 //打开一个文件选择框
                 OpenFileDialog ofd = new OpenFileDialog
@@ -264,10 +265,9 @@ namespace calibration_app
                 string timeStamp = DateFormat(now,"yyyy-MM-dd HH:mm:ss");
 
 
-                // 清空计时器
-                GatherTimer.Clear();
+                
                 // 计时器写入开始时间
-                GatherTimer.Add(now);
+                GatherTimer[0] = now;
 
 
                 StreamWriter sw = new StreamWriter(@".\Gather.txt", false);
@@ -311,7 +311,7 @@ namespace calibration_app
                 // 结束采集时将时间记录并写入文件
                 DateTime now = DateTime.Now;
                 string timeStamp = DateFormat(now, "yyyy-MM-dd HH:mm:ss");
-                GatherTimer.Add(now);
+                GatherTimer[1] = now;
                 FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
                
                 //获得字节数组
@@ -322,8 +322,8 @@ namespace calibration_app
                 fs.Flush();
                 fs.Close();
                 // 获取数据文件名
-                string oldFileName = GetFileName(DataType.SourceData, GatherTimer[0], null);
-                string newFileName = GetFileName(DataType.SourceData, GatherTimer[0], GatherTimer[1]);
+                string oldFileName = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
+                string newFileName = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1]);
                 File.Move(oldFileName, newFileName);
                 // 更新按钮显示
                 GatherCB.Content = GatherMenu.Header = "开始采集";
@@ -369,18 +369,35 @@ namespace calibration_app
                 // 读取第一行
                 string first = sr.ReadLine();
                 // 将数据存至采集计时器中
-                GatherTimer.Add(Convert.ToDateTime(first));
+                GatherTimer[0] = Convert.ToDateTime(first);
                 string second = sr.ReadLine();
                 // 结束时间
-                if (second != null) GatherTimer.Add(Convert.ToDateTime(second));
+                if (second != null)
+                {
+                    GatherTimer[1] = Convert.ToDateTime(second);
+
+                }
+                else
+                {
+                    GatherTimer[1] = null;
+                }
                 // 关闭streamreader
                 sr.Close();
+                // 初始化chartZone的Grid控件
+                AddCell(2, 2);
+
+                GetChart();
             }
+            else
+            {
+                for( int i = 0;i < GatherTimer.Count;i++)
+                {
+                    if (GatherTimer[i] == new DateTime()) GatherTimer[i] = null;
+                }
+            }
+            
 
-            // 初始化chartZone的Grid控件
-            AddCell(2, 2);
-
-            GetChart();
+            
         }
 
         
@@ -481,7 +498,6 @@ namespace calibration_app
         private void DispatcherTimer_Tick(object sender, EventArgs e)
         {
 
-            
             // 获取数据
             string dataPath = Setting.Gather.DataPath;
             FileStream fs = new FileStream(dataPath, FileMode.Open,FileAccess.Read);
@@ -537,33 +553,40 @@ namespace calibration_app
                     // 添加当前的点进入数组
                     SeriesCollection[0][dli].Values.Add(avg[dli]);
                 }
-                string fn = GetFileName(DataType.SourceData, GatherTimer[0], null);
-                FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
-                string[] column = new string[datas.Length];
-                column[0] = "\"" + datas[0] + "\"";
-                column[1] = spendTime.ToString();
-                for (int key = 0; key < avg.Length; key++)
-                {
-                    column[key + 2] = avg[key].ToString();
-                }
-                string line = string.Join(",",column) + Environment.NewLine;
-                byte[] by = Encoding.Default.GetBytes(line);
-                fileStream.Write(by, 0, by.Length);
-                fileStream.Close();
-                spendTime++;
+                
                 // 当两个相等时获取
                 if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
                 {
                     // 将新的坐标轴时间加入Labels数组
 
                     Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
-                   
+                    // 获取当前需要操作的文件名
+                    string fn = GetFileName(DataType.SourceData, (DateTime) GatherTimer[0], null);
+                    // 以追加写方式打开文件流
+                    FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
+                    // 行数据数组
+                    string[] column = new string[datas.Length];
+                    // 写数据
+                    column[0] = "\"" + datas[0] + "\"";
+                    // 数据编号
+                    column[1] = spendTime.ToString();
+                    // 遍历数据列
+                    for (int key = 0; key < avg.Length; key++)
+                    {
+                        column[key + 2] = avg[key].ToString();
+                    }
+                    // 将数据数组接合为字符串
+                    string line = string.Join(",", column) + Environment.NewLine;
+                    // 将字符串转换为byte型数据
+                    byte[] by = Encoding.Default.GetBytes(line);
+                    // 写数据
+                    fileStream.Write(by, 0, by.Length);
+                    // 关闭文件流
+                    fileStream.Close();
+                    spendTime++;
+                    // 清理数据缓存，准备下次数据接入
                     DataTemp.Clear();
                 }
-                
-
-
-                
 
             }
             fs.Close();
@@ -903,7 +926,7 @@ namespace calibration_app
             // 判断是否需要初始化标签
             if (isAddLabel)
             {
-                Labels = AddSonItem<string>(Labels, ChartStartFormat(GatherTimer[0], 60).ToString(), 0);
+                Labels = AddSonItem<string>(Labels, ChartStartFormat((DateTime)GatherTimer[0], 60).ToString(), 0);
             }
             // Y轴的轴标签显示结构
             YFormatter = AddItem<Func<double, string>>(YFormatter, value => value.ToString("N"));
@@ -997,10 +1020,10 @@ namespace calibration_app
         private void GetChart()
         {
             
-            string filepath = GetFileName(DataType.CalibrationData,GatherTimer[0],GatherTimer[1]);
+            string filepath = GetFileName(DataType.CalibrationData,(DateTime)GatherTimer[0],GatherTimer[1]);
 
             // 起始时间
-            DateTime startTime = GatherTimer[0];
+            DateTime startTime = (DateTime)GatherTimer[0];
             // 结束时间
             DateTime? endTime = GatherTimer[1];
 
@@ -1012,6 +1035,7 @@ namespace calibration_app
             
             // 获取数据
             string dataPath = GetFileName(DataType.SourceData, startTime, endTime);
+            if (!File.Exists(dataPath))  return; 
             string[] dataList = File.ReadAllLines(dataPath, Encoding.Default);
             // 设置曲线对象
             string[] dataHeader = dataList.Take(5).ToArray();
