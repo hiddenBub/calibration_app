@@ -168,25 +168,26 @@ namespace calibration_app
                     FileName = "",
                     Filter = "Excel文件(*.xls)|*"
                 };
-               
+                ofd.ShowDialog();
                 string filePath = ofd.FileName;
-                MessageBox.Show(filePath);
-                //DataTable dt = new DataTable();
-                //string strConn = "Provider=Microsoft.Jet.OLEDB.4.0;" + "Data Source=" + filePath + ";" + "Extended Properties=Excel 8.0;";
-                //using (OleDbConnection conn = new OleDbConnection(strConn))
-                //{
-                //    conn.Open();
-                //    string strExcel = "select * from [sheet1$]";
-                //    OleDbDataAdapter myCommand = new OleDbDataAdapter(strExcel, strConn);
-                //    myCommand.Fill(dt);
-                //}
-                
+                string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
+                DataSet ds = new DataSet();
+                OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
+                oada.Fill(ds);
+                DataTable dt = ds.Tables[0];
+                List<String[]> list = new List<string[]>();
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                   Console.Write(dt.Rows[i]["DATE"]+" "+ dt.Rows[i]["GHI"]+" "+ dt.Rows[i]["GTI"]+"\n");
+                }
             }
             else
             {
                 MessageBox.Show("请先采集源数据后再导入数据", "错误");
             }
         }
+
+        
         //private void ImportDataMenu_Click(object sender, RoutedEventArgs e)
         //{
         //    MessageBox.Show("导入校准数据");
