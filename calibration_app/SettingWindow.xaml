@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:rg="clr-namespace:unvell.ReoGrid;assembly=unvell.ReoGrid"
-        xmlns:local="clr-namespace:calibration_app"
+        xmlns:local="clr-namespace:calibration_app.SetOption"
         mc:Ignorable="d"
         ResizeMode="NoResize"
         Title="设置面板" Height="500" Width="600">
@@ -15,11 +15,42 @@
                 <RowDefinition Height="35"></RowDefinition>
             </Grid.RowDefinitions>
             <DockPanel Margin="5" Grid.Row="0">
-                <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5" SelectionChanged="ColTab_Change" TabStripPlacement="Left" >
-                    <TabItem Header="空间" MaxHeight="20" MaxWidth="78">
-
+                <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5"  TabStripPlacement="Left" >
+                    <TabItem Header="项目" MaxHeight="20" MaxWidth="78">
+                        <StackPanel HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="项目名称："></TextBlock>
+                                <TextBox Name="TbProName" Width="120" ></TextBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="设备经纬度："></TextBlock>
+                                <TextBox Name="TbProLng" Width="40"></TextBox>
+                                <TextBlock Text=" , "></TextBlock>
+                                <TextBox Name="TbProLat" Width="40"></TextBox>
+                            </StackPanel>
+                        </StackPanel>
                     </TabItem>
-                    <TabItem Header="品牌" MaxHeight="20" MaxWidth="78">
+                    <TabItem Header="采集" MaxHeight="20" MaxWidth="78">
+                        <StackPanel Margin="5" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="校准原数据存储位置："></TextBlock>
+                                <Button Name="SelectFileBtn" Content="选择文件..." Click="SelectFileBtn_Click"></Button>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+
+                                <TextBlock Text="采集数据类型："></TextBlock>
+                                <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="数据名称" Binding="{Binding Name}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="设备灵敏度" Binding="{Binding Sensitivity}"></DataGridTextColumn>
+                                        <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
+                                        <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:ColumnSetting.CalculateMethod}"  
+                                        TextBinding="{Binding Method}"  
+                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </StackPanel>
 
                     </TabItem>
                 </TabControl>
@@ -28,9 +59,11 @@
                         <GroupItem>
                             <TextBlock Text="▸采集设置" Cursor="Hand"></TextBlock>
                         </GroupItem>
-                        --><!--<GroupItem>
+                        -->
+                <!--<GroupItem>
                         <TextBlock Text="▸采集设置" Cursor="Hand"></TextBlock>
-                    </GroupItem>--><!--
+                    </GroupItem>-->
+                <!--
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Name="Settings" Header="设置" DockPanel.Dock="right" BorderBrush="Black" Margin="5,0" Padding="5">
@@ -39,21 +72,7 @@
                             <TextBlock Text="采集接口手机号："></TextBlock>
                             <TextBox Text="13240313410"></TextBox>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="5">
-                            <TextBlock Text="采集数据类型："></TextBlock>
-                            <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
-                                --><!--<DataGrid.Columns>
-                                    <DataGridTextColumn Header="数据名称" Binding="{Binding Name}"></DataGridTextColumn>
-                                    <DataGridComboBoxColumn Header="数据类型" ItemsSource="{x:Static local:GatherSetting.DataType}"  
-                                        TextBinding="{Binding Type}"  
-                                        SelectedItemBinding="{Binding Type,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
-                                    <DataGridTextColumn Header="采集频率" Binding="{Binding Frequency}"></DataGridTextColumn>
-                                    <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static local:GatherSetting.CalculateMethod}"  
-                                        TextBinding="{Binding Method}"  
-                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
-                                </DataGrid.Columns>--><!--
-                            </DataGrid>
-                        </StackPanel>
+                        
                     </StackPanel>
                 </GroupBox>-->
 
@@ -65,9 +84,9 @@
                     <ColumnDefinition Width="50"></ColumnDefinition>
                     <ColumnDefinition Width="50"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Button Margin="5" Content="确定" Grid.Column="1" Background="White" BorderBrush="White"></Button>
-                <Button Margin="5" Content="取消" Grid.Column="2" Background="White" BorderBrush="White"></Button>
-                <Button Margin="5" Content="应用" Grid.Column="3" Background="White" BorderBrush="White"></Button>
+                <Button Name="ConfirmButton" Margin="5,5,5,0" Content="确定" Grid.Column="1" Background="White" BorderBrush="White" Height="25" VerticalAlignment="Top" Click="ConfirmButton_Click"></Button>
+                <Button Name="CancelButton"  Margin="5" Content="取消" Grid.Column="2" Background="White" BorderBrush="White" Click="CancelButton_Click"/>
+                <Button Name="ApplyButton" Margin="5" Content="应用" Grid.Column="3" Background="White" BorderBrush="White" Click="ApplyButton_Click"></Button>
             </Grid>
         </Grid>
     </Grid>

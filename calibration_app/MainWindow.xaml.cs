@@ -170,6 +170,7 @@ namespace calibration_app
                 };
                 ofd.ShowDialog();
                 string filePath = ofd.FileName;
+
                 string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
                 DataSet ds = new DataSet();
                 OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
@@ -178,7 +179,7 @@ namespace calibration_app
                 List<String[]> list = new List<string[]>();
                 for (int i = 0; i < dt.Rows.Count; i++)
                 {
-                   Console.Write(dt.Rows[i]["DATE"]+" "+ dt.Rows[i]["GHI"]+" "+ dt.Rows[i]["GTI"]+"\n");
+                    Console.Write(dt.Rows[i]["DATE"] + " " + dt.Rows[i]["GHI"] + " " + dt.Rows[i]["GTI"] + "\n");
                 }
             }
             else
