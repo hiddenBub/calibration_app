@@ -27,11 +27,11 @@
                     <RowDefinition></RowDefinition>
                 </Grid.RowDefinitions>
                 <!--图表开始-->
-                <lvc:CartesianChart Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Name="AllDataChart" LegendLocation="Right" >
+                <lvc:CartesianChart Name="AllDataChart" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" LegendLocation="Right" >
                 </lvc:CartesianChart>
-                <lvc:CartesianChart Grid.Row="0" Grid.Column="2" Name="calibratingChart" LegendLocation="Right" >
+                <lvc:CartesianChart Name="calibratingChart" Grid.Row="0" Grid.Column="2" LegendLocation="Right" >
                 </lvc:CartesianChart>
-                <lvc:CartesianChart Grid.Row="1" Grid.Column="2" Name="calibratedChart" LegendLocation="Right" >
+                <lvc:CartesianChart Name="calibratedChart" Grid.Row="1" Grid.Column="2" LegendLocation="Right" >
                 </lvc:CartesianChart>
                 <!--图表结束-->
                 
