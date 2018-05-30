@@ -34,7 +34,7 @@ namespace calibration_app
     public partial class MainWindow : Window
     {
 
-        private bool isGather = false;
+        private static bool isGather = false;
 
         /// <summary>
         /// 表格容器根据所选选项卡布置表格
@@ -46,12 +46,12 @@ namespace calibration_app
 
         };
 
-        private List<DateTime?> gatherTimer = new List<DateTime?> {  new DateTime(), new DateTime() };
+        private static List<DateTime?> gatherTimer = new List<DateTime?> {  new DateTime(), new DateTime() };
 
         bool first = true;
 
 
-        public bool IsGather
+        public static bool IsGather
         {
             get => isGather;
             set
@@ -79,7 +79,7 @@ namespace calibration_app
             CalibrationData = 1,
         };
 
-        private string dataStorage = Environment.CurrentDirectory.ToString() + "\\DataStorage";
+        private static string dataStorage = Environment.CurrentDirectory.ToString() + "\\DataStorage";
 
         private string dateTimeFormat = "yyyy-MM-dd hh：mm：ss";
 
@@ -91,7 +91,7 @@ namespace calibration_app
         /// <summary>
         /// 系统设置
         /// </summary>
-        private Setting setting;
+        private static Setting setting;
 
         /// <summary>
         /// 计时器
@@ -127,10 +127,10 @@ namespace calibration_app
         public List<List<string>> Labels { get => labels; set => labels = value; }
         public List<Func<double, string>> YFormatter { get => yFormatter; set => yFormatter = value; }
         public List<CartesianChart> CartesianChart { get => cartesianChart; set => cartesianChart = value; }
-        public Setting Setting { get => setting; set => setting = value; }
-        public string DataStorage { get => dataStorage; set => dataStorage = value; }
+        public static Setting Setting { get => setting; set => setting = value; }
+        public static string DataStorage { get => dataStorage; set => dataStorage = value; }
         public string DateTimeFormat { get => dateTimeFormat; set => dateTimeFormat = value; }
-        public List<DateTime?> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
+        public static List<DateTime?> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
         public List<string[]> DataSource { get => dataSource; set => dataSource = value; }
 
         public MainWindow()
@@ -241,6 +241,11 @@ namespace calibration_app
                     }
                     sw.Close();
                     MessageBox.Show("导入完成");
+                    CalibrationWindow window = new CalibrationWindow
+                    {
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen
+                    };
+                    window.ShowDialog();
                 }
                 
             }
@@ -663,7 +668,7 @@ namespace calibration_app
         /// <param name="time"></param>
         /// <param name="format"></param>
         /// <returns></returns>
-        public string DateFormat (DateTime time,string format = "yyyy-MM-dd HH：mm：ss")
+        public static string DateFormat (DateTime time,string format = "yyyy-MM-dd HH：mm：ss")
         {
             return time.ToString(format);
         }
@@ -675,7 +680,7 @@ namespace calibration_app
         /// <param name="startTime"></param>
         /// <param name="endTime"></param>
         /// <returns></returns>
-        public string GetFileName(DataType type, DateTime startTime, DateTime? endTime)
+        public static string GetFileName(DataType type, DateTime startTime, DateTime? endTime)
         {
             // 生成字符串
             string result = Setting.Project.Name;
@@ -703,7 +708,7 @@ namespace calibration_app
         /// </summary>
         /// <param name="header"></param>
         /// <param name="fileName"></param>
-        public void AddDatHeader(List<string> header, string fileName)
+        public static void AddDatHeader(List<string> header, string fileName)
         {
             
             // 要生成的文件不存在

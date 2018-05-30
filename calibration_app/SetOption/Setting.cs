@@ -55,15 +55,36 @@ namespace calibration_app.SetOption
     {
         //[XmlIgnore]
         //public Gather Parent = new Gather();
-
+        /// <summary>
+        /// 索引
+        /// </summary>
         [XmlAttribute(AttributeName = "Index")]
         public int Index { get; set; }
+        /// <summary>
+        /// 行名称
+        /// </summary>
         [XmlAttribute(AttributeName = "Name")]
         public string Name { get; set; }
+        /// <summary>
+        /// 灵敏度
+        /// </summary>
         [XmlAttribute(AttributeName = "Sensitivity")]
         public double Sensitivity { get; set; }
+
+        /// <summary>
+        /// 采集频率
+        /// </summary>
         [XmlAttribute(AttributeName = "Frequency")]
         public int Frequency { get; set; }
+        /// <summary>
+        /// 映射至源数据的ID
+        /// </summary>
+        [XmlAttribute(AttributeName = "Shadow")]
+        public int Shadow { get; set; }
+
+        /// <summary>
+        /// 结果集方法
+        /// </summary>
         [XmlAttribute(AttributeName = "Method")]
         public string Method { get; set; }
 
