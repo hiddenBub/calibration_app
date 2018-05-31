@@ -163,5 +163,14 @@ namespace calibration_app
         {
 
         }
+        private void CalibrationBtn_Click(object sender, RoutedEventArgs e)
+        {
+            CalibrationSettingWindow csw = new CalibrationSettingWindow();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

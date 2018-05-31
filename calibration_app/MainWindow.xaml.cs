@@ -155,11 +155,15 @@ namespace calibration_app
         private void ImportCalibration_Click(object sender, RoutedEventArgs e)
         {
             bool IsGathering = isGather;
-            if (IsGathering)
+            if (!File.Exists(GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1])))
+            {
+                MessageBox.Show("请先采集源数据后再导入数据", "错误");
+            }
+            else if (IsGathering)
             {
                 MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
             }
-            else if (!IsGathering && GatherTimer.Count == 2 && GatherTimer[1] != null )
+            else if (!IsGathering && GatherTimer.Count == 2 && GatherTimer[1] != null)
             {
                 //打开一个文件选择框
                 OpenFileDialog ofd = new OpenFileDialog
@@ -199,28 +203,28 @@ namespace calibration_app
                         new string[length],
                     };
                     // 填充字段之前的数据
-                    header[1][0] = "TIMESTAMP";header[1][1] = "RECORD";
+                    header[1][0] = "TIMESTAMP"; header[1][1] = "RECORD";
                     header[2][0] = "TS"; header[2][1] = "RN";
-                    header[3][0] = "";header[3][1] = "";
+                    header[3][0] = ""; header[3][1] = "";
                     // 填充字段
-                    for (int j = 1; j < dt.Columns.Count;j++)
+                    for (int j = 1; j < dt.Columns.Count; j++)
                     {
-                        header[1][j +1] = dt.Columns[j].ToString();
+                        header[1][j + 1] = dt.Columns[j].ToString();
                         header[2][j + 1] = "W/m2";
                         header[3][j + 1] = "Avg";
                     }
                     // 创建以行为区分的数据列表
                     List<string> headerNew = new List<string>();
                     // 循环遍历原列表并将字符串数据存至新列表
-                    for (int k= 0;k<header.Count;k++)
+                    for (int k = 0; k < header.Count; k++)
                     {
-                        headerNew.Add("\"" + string.Join("\",\"",header[k]) + "\"");
+                        headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
                     }
                     // 生成校准数据文件名
                     string fileName = GetFileName(DataType.CalibrationData, (DateTime)GatherTimer[0], GatherTimer[1]);
                     // 为该文件添加表头
                     AddDatHeader(headerNew, fileName);
-                    
+
                     List<String[]> list = new List<string[]>();
                     // 生成文件写入实例，准备写入文件
                     StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
@@ -229,9 +233,9 @@ namespace calibration_app
 
                         Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
                         // 初始化数据(单行)字符串
-                        string str = "\""+DateFormat(Convert.ToDateTime(dt.Rows[i][dt.Columns[0]]),"yyyy-MM-dd HH:mm:ss") + "\","+ i;
+                        string str = "\"" + DateFormat(Convert.ToDateTime(dt.Rows[i][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + i;
                         // 填充数据
-                        for (int ii = 1;ii< dt.Columns.Count; ii++)
+                        for (int ii = 1; ii < dt.Columns.Count; ii++)
                         {
                             str += "," + dt.Rows[i][dt.Columns[ii]];
                         }
@@ -247,12 +251,9 @@ namespace calibration_app
                     };
                     window.ShowDialog();
                 }
-                
+
             }
-            else
-            {
-                MessageBox.Show("请先采集源数据后再导入数据", "错误");
-            }
+            
         }
 
         
@@ -323,15 +324,15 @@ namespace calibration_app
         /// <param name="state">当前是否在采集中</param>
         public void SwitchGather(bool state)
         {
-            //DateTime now = DateTime.Now;
-            //string dateTimeFormat = "yyyy-MM-dd hh:mm:ss";
-            //string timeStamp = now.ToString(dateTimeFormat) + "\r\n";
+            DateTime now = DateTime.Now;
+            string dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+            string timeStamp = DateFormat(now, dateTimeFormat);
             if (!state)
             {
 
                 // 将开始采集时间点写入到文件做记录
-                DateTime now = new DateTime(2018, 05, 09, 21, 16, 39);
-                string timeStamp = DateFormat(now,"yyyy-MM-dd HH:mm:ss");
+                //DateTime now = new DateTime(2018, 05, 09, 21, 16, 39);
+                //string timeStamp = DateFormat(now,"yyyy-MM-dd HH:mm:ss");
 
 
                 
@@ -371,15 +372,19 @@ namespace calibration_app
                 InitChart(header);
 
                 //定时查询-定时器
-                dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
-                dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+                //if (dispatcherTimer.Tick == null)
+                //{
+                    dispatcherTimer.Tick += new EventHandler(DispatcherTimer_Tick);
+                    dispatcherTimer.Interval = new TimeSpan(0, 0, 1);
+                //}
+                
                 dispatcherTimer.Start();
             }
             else
             {
                 // 结束采集时将时间记录并写入文件
-                DateTime now = DateTime.Now;
-                string timeStamp = DateFormat(now, "yyyy-MM-dd HH:mm:ss");
+                //DateTime now = DateTime.Now;
+                //string timeStamp = DateFormat(now, "yyyy-MM-dd HH:mm:ss");
                 GatherTimer[1] = now;
                 FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
                
@@ -580,11 +585,12 @@ namespace calibration_app
             char[] sp = { ',', '"' ,'\r','\n'};
             // 存储数据型
             string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-            string date = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[0];
-            DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
-            DateTime latest = Convert.ToDateTime(date + " 19:00:00");
-            if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
-            if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
+            string[] split = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string date = split[0];
+            //DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
+            //DateTime latest = Convert.ToDateTime(date + " 19:00:00");
+            //if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
+            //if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
 
             //// 获取当前选择选项卡的数据模型
             //Column column = Setting.Gather.ColumnList[optionIndex];
@@ -629,10 +635,7 @@ namespace calibration_app
                     // 将新的坐标轴时间加入Labels数组
 
                     Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
-                    // 获取当前需要操作的文件名
-                    string fn = GetFileName(DataType.SourceData, (DateTime) GatherTimer[0], null);
-                    // 以追加写方式打开文件流
-                    FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
+                    
                     // 行数据数组
                     string[] column = new string[datas.Length];
                     // 写数据
@@ -648,6 +651,10 @@ namespace calibration_app
                     string line = string.Join(",", column) + Environment.NewLine;
                     // 将字符串转换为byte型数据
                     byte[] by = Encoding.Default.GetBytes(line);
+                    // 获取当前需要操作的文件名
+                    string fn = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
+                    // 以追加写方式打开文件流
+                    FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
                     // 写数据
                     fileStream.Write(by, 0, by.Length);
                     // 关闭文件流
@@ -1178,6 +1185,11 @@ namespace calibration_app
                
             }
             
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

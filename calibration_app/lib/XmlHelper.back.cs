@@ -13,7 +13,6 @@ namespace calibration_app.lib
     /// <summary>
     /// 实体转Xml，Xml转实体类
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public class XmlHelperBack<T> where T : new()
     {
         #region 实体类转成Xml

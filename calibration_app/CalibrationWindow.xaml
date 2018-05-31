@@ -8,18 +8,24 @@
         mc:Ignorable="d"
         Title="校准" Height="450" Width="800" WindowState="Maximized">
     <Grid>
-        <DockPanel>
-            <ToolBar DockPanel.Dock="Top" MaxHeight="35">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition MaxHeight="30"></RowDefinition>
+                <RowDefinition></RowDefinition>
+                <RowDefinition MaxHeight="40"></RowDefinition>
+            </Grid.RowDefinitions>
+           
+            <ToolBar Grid.Row="0" MaxHeight="35">
                 <Button Name="ImportCalibration" Content="重新导入" Click="ImportCalibration_Click"></Button>
-
+                
                 <Button Name="ExportBtn" Content="导出报告" Click="ExportBtn_Click"></Button>
 
+                <Button Name="CalibrationBtn" Content="校准设置" Click="CalibrationBtn_Click"></Button>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->
             </ToolBar>
-            <Grid DockPanel.Dock="Top">
+            <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition ></ColumnDefinition>
-                    <ColumnDefinition MaxWidth="100" Width="100*"></ColumnDefinition>
                     <ColumnDefinition ></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -29,30 +35,20 @@
                 <!--图表开始-->
                 <lvc:CartesianChart Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Name="AllDataChart" LegendLocation="Right" >
                 </lvc:CartesianChart>
-                <lvc:CartesianChart Grid.Row="0" Grid.Column="2" Name="calibratingChart" LegendLocation="Right" >
+                <lvc:CartesianChart Grid.Row="0" Grid.Column="1" Name="calibratingChart" LegendLocation="Right" >
                 </lvc:CartesianChart>
-                <lvc:CartesianChart Grid.Row="1" Grid.Column="2" Name="calibratedChart" LegendLocation="Right" >
+                <lvc:CartesianChart Grid.Row="1" Grid.Column="1" Name="calibratedChart" LegendLocation="Right" >
                 </lvc:CartesianChart>
                 <!--图表结束-->
-                
-                <StackPanel Name="SelectBlock" Grid.Column="1" Grid.Row="0" VerticalAlignment="Center" Margin="5">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="GHI"></TextBlock>
-                        <ComboBox  Grid.Row="0" Grid.Column="1" SelectedItem="111" >
-                            <ComboBoxItem Content="111" ></ComboBoxItem>
-                            <ComboBoxItem Content="222"></ComboBoxItem>
-                            <ComboBoxItem Content="333"></ComboBoxItem>
-                            <ComboBoxItem Content="444"></ComboBoxItem>
-                        </ComboBox>
-                    </StackPanel>
-                    
-                </StackPanel>
-                <StackPanel Name="ButtonBlock" Grid.Column="1" Grid.Row="1" Margin="5">
-                    <Button Content="数据清洗" MaxHeight="40"></Button>
-                    <Button Grid.Column="1" Grid.Row="1" Content="校准数据" MaxHeight="40"></Button>
-                </StackPanel>
-                
+             
             </Grid>
-        </DockPanel>
+            
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom" >
+                <Button Content="数据清洗" Name="ClearButton" MaxHeight="40" Margin="5" Click="Button_Click"></Button>
+                
+                <Button Content="数据校准" Name="CalibrateButton" MaxHeight="40" Margin="5"></Button>
+            </StackPanel>
+            
+        </Grid>
     </Grid>
 </Window>

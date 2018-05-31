@@ -1,0 +1,32 @@
+﻿<Window x:Class="calibration_app.CalibrationSettingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Setting="clr-namespace:calibration_app.SetOption"
+        xmlns:local="clr-namespace:calibration_app"
+        mc:Ignorable="d"
+        Title="校准设置" Height="300" Width="500">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition MaxHeight="40"></RowDefinition>
+        </Grid.RowDefinitions>
+        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
+                <DataGridTextColumn Header="设备灵敏度" Binding="{Binding Sensitivity}"></DataGridTextColumn>
+                <DataGridTextColumn Header="采集频率(s）" Binding="{Binding Frequency}"></DataGridTextColumn>
+                <DataGridComboBoxColumn Header="比较源数据" ItemsSource="{x:Static local:CalibrationSettingWindow.SourceCol}"  
+                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static Setting:ColumnSetting.CalculateMethod}"  
+                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                
+            </DataGrid.Columns>
+        </DataGrid>
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
+            <Button Name="ConfirmButton" Content="确定" Margin="5" Click="ConfirmButton_Click" MinWidth="60"></Button>
+            <Button Name="CancelButton" Content="取消" Margin="5" Click="CancelButton_Click" MinWidth="60"></Button>
+        </StackPanel>
+    </Grid>
+</Window>
