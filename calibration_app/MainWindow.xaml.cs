@@ -421,17 +421,7 @@ namespace calibration_app
             first = false;
             // 读取本地设置文件中的设置
             Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
-            // 遍历用户所做配置的字段
-            foreach (Column temp in setting.Gather.ColumnList)
-            {
-                // 根据字段名称布置选项卡并添加至ColTab内
-                TabItem myDnymicTab = new TabItem() { Header = temp.Name, MaxHeight = 20, MaxWidth = 78 };
-                ColTab.Items.Add(myDnymicTab);
-
-            }
-            // 页面载入成功后直接选择第一个选项卡
-            ColTab.SelectedItem = ColTab.Items[0];
-
+            
             string filePath = "./Gather.txt";
 
 
@@ -461,6 +451,7 @@ namespace calibration_app
                 AddCell(2, 2);
 
                 GetChart();
+                Tab.Children.Add(ChartZone);
             }
             else
             {
@@ -530,39 +521,39 @@ namespace calibration_app
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ColTab_Change(object sender, SelectionChangedEventArgs e)
-        {
-            // 判断当前是否是首次进入页面，主要用于屏蔽一些bug
-            if (!first)
-            {
-                // 设置索引初始值
-                int i = 0;
-                // 遍历选项卡数据(初始化原始选项卡标签)
-                foreach (TabItem it in ColTab.Items)
-                {
-                    // 将当前选项卡的对象存至item变量中
-                    var item = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.Items[i]) as TabItem;
-                    // 取得当前选项卡的显示标题
-                    string header = item.Header.ToString();
-                    // 将header分割成数组
-                    string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
-                    // 取得只需显示的部分
-                    item.Header = headers[0];
-                    // 将选项卡里的内容移除，用作数据表grid单例构造
-                    item.Content = null;
-                    // 更新索引
-                    i++;
-                }
-                // 取得当前操作的选项卡并将该对象存至temp变量中
-                var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
-                optionIndex = ColTab.SelectedIndex;
-                // 以可显示的方式展示被选中选项卡
-                temp.Header += "-selected";
-                // 将图表grid存放至选项卡中
-                temp.Content = ChartZone;
-            }
+        //private void ColTab_Change(object sender, SelectionChangedEventArgs e)
+        //{
+        //    // 判断当前是否是首次进入页面，主要用于屏蔽一些bug
+        //    if (!first)
+        //    {
+        //        // 设置索引初始值
+        //        int i = 0;
+        //        // 遍历选项卡数据(初始化原始选项卡标签)
+        //        foreach (TabItem it in ColTab.Items)
+        //        {
+        //            // 将当前选项卡的对象存至item变量中
+        //            var item = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.Items[i]) as TabItem;
+        //            // 取得当前选项卡的显示标题
+        //            string header = item.Header.ToString();
+        //            // 将header分割成数组
+        //            string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        //            // 取得只需显示的部分
+        //            item.Header = headers[0];
+        //            // 将选项卡里的内容移除，用作数据表grid单例构造
+        //            item.Content = null;
+        //            // 更新索引
+        //            i++;
+        //        }
+        //        // 取得当前操作的选项卡并将该对象存至temp变量中
+        //        var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
+        //        optionIndex = ColTab.SelectedIndex;
+        //        // 以可显示的方式展示被选中选项卡
+        //        temp.Header += "-selected";
+        //        // 将图表grid存放至选项卡中
+        //        temp.Content = ChartZone;
+        //    }
 
-        }
+        //}
 
         /// <summary>
         /// 定时器回调函数
@@ -578,94 +569,120 @@ namespace calibration_app
            
             StringBuilder sb = new StringBuilder();
             long newPos = InverseReadRow(fs, fs.Length,ref sb);
-            fs.Close();
+
             // 存储当前行
-            string a = sb.ToString();
+            List<string> a = new List<string>
+            {
+                sb.ToString()
+            };
+
             // 设置分割字符
             char[] sp = { ',', '"' ,'\r','\n'};
             // 存储数据型
-            string[] datas = a.Split(sp, StringSplitOptions.RemoveEmptyEntries);
-            string[] split = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string date = split[0];
-            //DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
-            //DateTime latest = Convert.ToDateTime(date + " 19:00:00");
-            //if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
-            //if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
-
-            //// 获取当前选择选项卡的数据模型
-            //Column column = Setting.Gather.ColumnList[optionIndex];
+            string[] datas = a[0].Split(sp, StringSplitOptions.RemoveEmptyEntries);
             // 取得X轴中最后一个时间戳
             string lastTimeStamp = labels[0][(labels[0].Count) - 1];
             // 将数据中的时间取出
             DateTime dateTime = Convert.ToDateTime(datas[0]);
-            // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
-            if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) >= 0)
+            
+            if (labels[0].Count > 1 && DataTemp.Count > 0 && (dateTime.Second - 1 > DataTemp[0].Count || (dateTime.Second == 1 && DataTemp[0].Count == 59)))
             {
-                for (int di = 2; di < datas.Length; di++)
-                {
-                    if (!decimal.TryParse(datas[di], out decimal x))
-                    {
-                        return;
-                    }
-                    int scIndex = di - 2;
-
-                    // 将取得的数据存入dataTemp
-                    DataTemp = AddSonItem<Decimal>(DataTemp, x, scIndex);
-
-                }
-                // 获取临时数据存储数组项目数量                                
-                int count = DataTemp.Count;
-                double[] avg = new double[datas.Length - 2];
-                for (int dli = 0; dli < count; dli++)
-                {
-                    // 使用均值方法获取均值
-                    avg[dli] = GetAvg(DataTemp[dli]);
-                    // 数据列中当前列的数量大于0 并且dataTemp中对应数据多于1的时候将数据列中的该点移除
-                    if (SeriesCollection[0][dli].Values.Count > 0 && DataTemp[dli].Count > 1)
-                    {
-                        SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
-                    }
-                    // 添加当前的点进入数组
-                    SeriesCollection[0][dli].Values.Add(avg[dli]);
-                }
-                
-                // 当两个相等时获取
-                if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
-                {
-                    // 将新的坐标轴时间加入Labels数组
-
-                    Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
-                    
-                    // 行数据数组
-                    string[] column = new string[datas.Length];
-                    // 写数据
-                    column[0] = "\"" + datas[0] + "\"";
-                    // 数据编号
-                    column[1] = spendTime.ToString();
-                    // 遍历数据列
-                    for (int key = 0; key < avg.Length; key++)
-                    {
-                        column[key + 2] = avg[key].ToString();
-                    }
-                    // 将数据数组接合为字符串
-                    string line = string.Join(",", column) + Environment.NewLine;
-                    // 将字符串转换为byte型数据
-                    byte[] by = Encoding.Default.GetBytes(line);
-                    // 获取当前需要操作的文件名
-                    string fn = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
-                    // 以追加写方式打开文件流
-                    FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
-                    // 写数据
-                    fileStream.Write(by, 0, by.Length);
-                    // 关闭文件流
-                    fileStream.Close();
-                    spendTime++;
-                    // 清理数据缓存，准备下次数据接入
-                    DataTemp.Clear();
-                }
-
+                sb.Clear();
+                newPos = InverseReadRow(fs, newPos, ref sb);
+                a.Add(sb.ToString());
+                a.Reverse();
             }
             fs.Close();
+            Console.WriteLine("X轴时间戳:"+lastTimeStamp+",现在取得的时间:"+datas[0]+",样本数量:"+a.Count);
+            if (DataTemp.Count > 0)
+            {
+                Console.WriteLine("待更新数据数量:" + DataTemp[0].Count);
+            }
+
+            for (int i = 0; i < a.Count; i++)
+            {
+                datas = a[i].Split(sp, StringSplitOptions.RemoveEmptyEntries);
+                
+                string[] split = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string date = split[0];
+                //DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
+                //DateTime latest = Convert.ToDateTime(date + " 19:00:00");
+                //if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
+                //if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
+
+                //// 获取当前选择选项卡的数据模型
+                //Column column = Setting.Gather.ColumnList[optionIndex];
+
+                // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
+                if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) <= 0)
+                {
+                    for (int di = 2; di < datas.Length; di++)
+                    {
+                        if (!decimal.TryParse(datas[di], out decimal x))
+                        {
+                            return;
+                        }
+                        int scIndex = di - 2;
+
+                        // 将取得的数据存入dataTemp
+                        DataTemp = AddSonItem<Decimal>(DataTemp, x, scIndex);
+
+                    }
+                    
+                    // 获取临时数据存储数组项目数量                                
+                    int count = DataTemp.Count;
+                    double[] avg = new double[datas.Length - 2];
+                    for (int dli = 0; dli < count; dli++)
+                    {
+                        // 使用均值方法获取均值
+                        avg[dli] = GetAvg(DataTemp[dli]);
+                        // 数据列中当前列的数量大于0 并且dataTemp中对应数据多于1的时候将数据列中的该点移除
+                        if (SeriesCollection[0][dli].Values.Count > 0 && DataTemp[dli].Count > 1)
+                        {
+                            SeriesCollection[0][dli].Values.RemoveAt(SeriesCollection[0][dli].Values.Count - 1);
+                        }
+                        // 添加当前的点进入数组
+                        SeriesCollection[0][dli].Values.Add(avg[dli]);
+                    }
+
+                    // 当两个相等时获取
+                    if (DateTime.Compare(dateTime, Convert.ToDateTime(lastTimeStamp)) == 0)
+                    {
+                        // 将新的坐标轴时间加入Labels数组
+
+                        Labels[0].Add(Convert.ToDateTime(lastTimeStamp).AddSeconds(60).ToString());
+
+                        // 行数据数组
+                        string[] column = new string[datas.Length];
+                        // 写数据
+                        column[0] = "\"" + datas[0] + "\"";
+                        // 数据编号
+                        column[1] = spendTime.ToString();
+                        // 遍历数据列
+                        for (int key = 0; key < avg.Length; key++)
+                        {
+                            column[key + 2] = avg[key].ToString();
+                        }
+                        // 将数据数组接合为字符串
+                        string line = string.Join(",", column) + Environment.NewLine;
+                        // 将字符串转换为byte型数据
+                        byte[] by = Encoding.Default.GetBytes(line);
+                        // 获取当前需要操作的文件名
+                        string fn = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
+                        // 以追加写方式打开文件流
+                        FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
+                        // 写数据
+                        fileStream.Write(by, 0, by.Length);
+                        // 关闭文件流
+                        fileStream.Close();
+                        spendTime++;
+                        // 清理数据缓存，准备下次数据接入
+                        DataTemp.Clear();
+                    }
+
+                }
+            }
+     
         }
         #region 自定义函数开始
 
@@ -834,7 +851,7 @@ namespace calibration_app
         {
             int count = arr.Count;
             decimal sum = arr.Sum();
-            return Convert.ToDouble(sum / count);
+            return Convert.ToDouble(Math.Round(sum / count, 3));
         }
         //public string[] SaveData ()
 
@@ -1107,7 +1124,6 @@ namespace calibration_app
             string date_temp = string.Format("{0:g}", startTime);
             date_temp += ":00";
             // 获取当前周期内的频率
-            double fre = Setting.Gather.ColumnList[optionIndex].Frequency;
             
             // 获取数据
             string dataPath = GetFileName(DataType.SourceData, startTime, endTime);

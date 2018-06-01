@@ -23,25 +23,51 @@ namespace calibration_app
     public partial class CalibrationSettingWindow : Window
     {
         private Setting setting;
-        private static List<string> sourceCol;
-        public ObservableCollection<Column> ColumnList { get; set; }   //动态数组
+        private static ObservableCollection<string> sourceCol = new ObservableCollection<string>();
+        private ObservableCollection<Column> columnList = new ObservableCollection<Column>();
+
 
         public Setting Setting { get => setting; set => setting = value; }
-        public static List<string> SourceCol { get => sourceCol; set => sourceCol = value; }
+        public static ObservableCollection<string> SourceCol { get => sourceCol; set => sourceCol = value; }
+        public ObservableCollection<Column> ColumnList { get => columnList; set => columnList = value; }
 
         public CalibrationSettingWindow()
         {
             InitializeComponent();
             Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
-            ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
-            string fileName = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            StreamReader sr = new StreamReader(fileName,false);
-            string[] lines = new string[4];
-            for (int i = 0; i < 4; i++)
+            
+            string fileSource = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            string fileCalibration = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            StreamReader srSource = new StreamReader(fileSource, false);
+            StreamReader srCalibration = new StreamReader(fileCalibration, false);
+            int length = 2;
+            string[] linesS = new string[length];
+            string[] linesC = new string[length];
+            for (int i = 0; i < length; i++)
             {
-                lines[i] = sr.ReadLine();
+                linesS[i] = srSource.ReadLine();
+                linesC[i] = srCalibration.ReadLine();
             }
-            sourceCol = new List<string>(lines[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
+            srCalibration.Close();
+            srSource.Close();
+            List<string> ColS = new List<string>(linesS[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
+            List<string> ColC = new List<string>(linesC[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
+            if (Setting.Gather.ColumnList.Count == ColC.Count - 2)
+            {
+                ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
+            }
+            else
+            {
+                for (int i = 2; i < ColC.Count; i++)
+                {
+                    ColumnList.Add(new Column( i-2,ColC[i]));
+                }
+            }
+            for (int i = 2; i < ColS.Count; i++)
+            {
+                sourceCol.Add(ColS[i]);
+            }
+            
             GridGather.ItemsSource = ColumnList;
         }
 
@@ -70,9 +96,32 @@ namespace calibration_app
             }
         }
 
+        /// <summary>     
+        /// XML序列化某一类型到指定的文件   
+        /// /// </summary>   
+        /// /// <param name="filePath"></param>   
+        /// /// <param name="obj"></param>  
+        /// /// <param name="type"></param>   
+        public static void SerializeToXml<T>(string filePath, T obj)
+        {
+            try
+            {
+                using (System.IO.StreamWriter writer = new System.IO.StreamWriter(filePath))
+                {
+                    System.Xml.Serialization.XmlSerializerNamespaces ns = new System.Xml.Serialization.XmlSerializerNamespaces();
+                    //Add an empty namespace and empty value
+                    ns.Add("", ""); System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T)); xs.Serialize(writer, obj, ns);
+                }
+            }
+            catch (Exception ex) { }
+        }
+
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
-
+            Setting.Gather.ColumnList = ColumnList;
+            string settingPath = @"./Setting.xml";
+            SerializeToXml(settingPath, Setting);
+            this.DialogResult = true;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

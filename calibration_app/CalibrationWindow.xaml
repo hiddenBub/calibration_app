@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:calibration_app"
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         mc:Ignorable="d"
-        Title="校准" Height="450" Width="800" WindowState="Maximized">
+        Title="校准" Height="450" Width="800" WindowState="Maximized" Loaded="Window_Loaded">
     <Grid>
         <Grid>
             <Grid.RowDefinitions>
@@ -20,7 +20,7 @@
                 
                 <Button Name="ExportBtn" Content="导出报告" Click="ExportBtn_Click"></Button>
 
-                <Button Name="CalibrationBtn" Content="校准设置" Click="CalibrationBtn_Click"></Button>
+                <Button Name="CalibrationBtn" Content="校准设置" Click="CalibrationBtn_Click" Margin="0,0,0,2" VerticalAlignment="Bottom"></Button>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->
             </ToolBar>
             <Grid Grid.Row="1">

@@ -56,23 +56,7 @@ namespace calibration_app
         public CalibrationWindow()
         {
             InitializeComponent();
-            string sourceFile = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            string calibrationFile = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
-            string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
-            int j = 1;
-            for (int i = 1; i < calibrationDataList.Length; i++)
-            {
-                char[] separator = new char[] { ',', '"' };
-                string[] datas = calibrationDataList[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                DateTime tinyTime = Convert.ToDateTime(datas[0]);
-                
-                for (int jj = j;jj < sourceDataList.Length; jj++)
-                {
-
-                    j = jj;
-                }
-            }
+            
         }
 
         private void ImportCalibration_Click(object sender, RoutedEventArgs e)
@@ -187,6 +171,32 @@ namespace calibration_app
         private void Button_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            CalibrationSettingWindow csw = new CalibrationSettingWindow();
+            csw.ShowDialog();
+            if (csw.DialogResult == true)
+            {
+                string sourceFile = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                string calibrationFile = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
+                string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
+                int j = 1;
+                for (int i = 1; i < calibrationDataList.Length; i++)
+                {
+                    char[] separator = new char[] { ',', '"' };
+                    string[] datas = calibrationDataList[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                    //DateTime tinyTime = Convert.ToDateTime(datas[0]);
+
+                    //for (int jj = j; jj < sourceDataList.Length; jj++)
+                    //{
+
+                    //    j = jj;
+                    //}
+                }
+            }
         }
     }
 }

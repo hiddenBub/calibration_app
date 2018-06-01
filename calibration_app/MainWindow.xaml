@@ -34,64 +34,13 @@
                         <!--<MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>-->
                     <MenuItem Header="导入校准数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                 </Menu>
-                <Button Name="ExportBtn" Content="导出图表" Click="ExportBtn_Click" VerticalAlignment="Bottom">
-                </Button>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->
             </ToolBar>
-            <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5" SelectionChanged="ColTab_Change" >
-                <!--<TabItem Name="tab1" Header="户型" MaxHeight="20" MaxWidth="78" >-->
-                    <!--<Grid Name="ChartZone" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition></ColumnDefinition>
-                            <ColumnDefinition></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition></RowDefinition>
-                            <RowDefinition></RowDefinition>
-                        </Grid.RowDefinitions>
-                        <lvc:CartesianChart Grid.Row="0" Grid.Column="0" Series="{Binding SeriesCollection[0]}" LegendLocation="Right" >
-                            <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[0]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisY>
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Month" Labels="{Binding Labels[0]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisX>
-                        </lvc:CartesianChart>
-                        <lvc:CartesianChart Grid.Row="0" Grid.Column="1" Series="{Binding SeriesCollection[1]}" LegendLocation="Right" >
-                            <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[1]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisY>
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Month" Labels="{Binding Labels[1]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisX>
-                        </lvc:CartesianChart>
-                        <lvc:CartesianChart Grid.Row="1" Grid.Column="0" Series="{Binding SeriesCollection[2]}" LegendLocation="Right" >
-                            <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[2]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisY>
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Month" Labels="{Binding Labels[2]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisX>
-                        </lvc:CartesianChart>
-                        <lvc:CartesianChart Grid.Row="1" Grid.Column="1" Series="{Binding SeriesCollection[3]}" LegendLocation="Right" >
-                            <lvc:CartesianChart.AxisY>
-                                <lvc:Axis Title="Sales" LabelFormatter="{Binding YFormatter[3]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisY>
-                            <lvc:CartesianChart.AxisX>
-                                <lvc:Axis Title="Month" Labels="{Binding Labels[3]}"></lvc:Axis>
-                            </lvc:CartesianChart.AxisX>
-                        </lvc:CartesianChart>
-                    </Grid>-->
-                <!--</TabItem>
-                <TabItem Header="空间" MaxHeight="20" MaxWidth="78">
-                    
-                </TabItem>
-                <TabItem Header="品牌" MaxHeight="20" MaxWidth="78">
-                    
-                </TabItem>-->
+            <Grid x:Name="Tab" DockPanel.Dock="Top" Margin="5" VerticalAlignment="Stretch" >
                 
-            </TabControl>
+            </Grid >
+            
             
             
             <!--<TextBox Height="346" Text="This is my space" DockPanel.Dock="Top" />-->

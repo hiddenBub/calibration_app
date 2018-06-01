@@ -80,7 +80,7 @@ namespace calibration_app.SetOption
         /// 映射至源数据的ID
         /// </summary>
         [XmlAttribute(AttributeName = "Shadow")]
-        public int Shadow { get; set; }
+        public string Shadow { get; set; }
 
         /// <summary>
         /// 结果集方法
@@ -96,6 +96,16 @@ namespace calibration_app.SetOption
         {
             if (this.PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(PropertyName));
+        }
+        #endregion
+
+        #region 构造函数重载
+
+        public Column() { }
+        public Column(int index, string name)
+        {
+            Index = index;
+            Name = name;
         }
         #endregion
     }

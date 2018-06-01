@@ -12,13 +12,13 @@
             <RowDefinition></RowDefinition>
             <RowDefinition MaxHeight="40"></RowDefinition>
         </Grid.RowDefinitions>
-        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
+        <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="false">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="数据名称" Binding="{Binding Name}" ></DataGridTextColumn>
                 <DataGridTextColumn Header="设备灵敏度" Binding="{Binding Sensitivity}"></DataGridTextColumn>
                 <DataGridTextColumn Header="采集频率(s）" Binding="{Binding Frequency}"></DataGridTextColumn>
                 <DataGridComboBoxColumn Header="比较源数据" ItemsSource="{x:Static local:CalibrationSettingWindow.SourceCol}"  
-                                        SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
+                                        SelectedItemBinding="{Binding Shadow,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                 <DataGridComboBoxColumn Header="结果集方法" ItemsSource="{x:Static Setting:ColumnSetting.CalculateMethod}"  
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                 
