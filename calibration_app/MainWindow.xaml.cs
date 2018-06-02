@@ -222,16 +222,18 @@ namespace calibration_app
                     }
                     // 生成校准数据文件名
                     string fileName = GetFileName(DataType.CalibrationData, (DateTime)GatherTimer[0], GatherTimer[1]);
+                    if (File.Exists(fileName)) File.Delete(fileName);
                     // 为该文件添加表头
                     AddDatHeader(headerNew, fileName);
 
                     List<String[]> list = new List<string[]>();
                     // 生成文件写入实例，准备写入文件
+                    
                     StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
                     for (int i = 0; i < dt.Rows.Count; i++)
                     {
 
-                        Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
+                        //Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
                         // 初始化数据(单行)字符串
                         string str = "\"" + DateFormat(Convert.ToDateTime(dt.Rows[i][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + i;
                         // 填充数据
@@ -244,7 +246,6 @@ namespace calibration_app
                         sw.WriteLine(str);
                     }
                     sw.Close();
-                    MessageBox.Show("导入完成");
                     CalibrationWindow window = new CalibrationWindow
                     {
                         WindowStartupLocation = WindowStartupLocation.CenterScreen
@@ -593,11 +594,11 @@ namespace calibration_app
                 a.Reverse();
             }
             fs.Close();
-            Console.WriteLine("X轴时间戳:"+lastTimeStamp+",现在取得的时间:"+datas[0]+",样本数量:"+a.Count);
-            if (DataTemp.Count > 0)
-            {
-                Console.WriteLine("待更新数据数量:" + DataTemp[0].Count);
-            }
+            //Console.WriteLine("X轴时间戳:"+lastTimeStamp+",现在取得的时间:"+datas[0]+",样本数量:"+a.Count);
+            //if (DataTemp.Count > 0)
+            //{
+            //    Console.WriteLine("待更新数据数量:" + DataTemp[0].Count);
+            //}
 
             for (int i = 0; i < a.Count; i++)
             {
@@ -847,10 +848,17 @@ namespace calibration_app
         /// </summary>
         /// <param name="arr"></param>
         /// <returns></returns>
-        public double GetAvg(List<decimal> arr)
+        public static double GetAvg(List<decimal> arr)
         {
             int count = arr.Count;
             decimal sum = arr.Sum();
+            return Convert.ToDouble(Math.Round(sum / count, 3));
+        }
+
+        public static double GetAvg(List<double> arr)
+        {
+            int count = arr.Count;
+            double sum = arr.Sum();
             return Convert.ToDouble(Math.Round(sum / count, 3));
         }
         //public string[] SaveData ()
@@ -897,7 +905,7 @@ namespace calibration_app
             return variable;
         }
 
-        public List<T> AddItem<T>(List<T> variable, T item)
+        public static List<T> AddItem<T>(List<T> variable, T item)
         {
             /*判断数组的长度*/
             // 如果数组长度大于需要更改的索引值，则说明该索引存在
@@ -916,7 +924,7 @@ namespace calibration_app
             return variable;
         }
 
-        public List<List<T>> AddSonItem<T> (List<List<T>> variable,T sonItem ,int index)
+        public static List<List<T>> AddSonItem<T> (List<List<T>> variable,T sonItem ,int index)
         {
             /*判断数组的长度*/
             // 如果数组长度大于需要更改的索引值，则说明该索引存在
@@ -970,6 +978,11 @@ namespace calibration_app
             Labels.Clear();
         }
 
+        /// <summary>
+        /// 初始化图表
+        /// </summary>
+        /// <param name="datasList"></param>
+        /// <param name="isAddLabel"></param>
         private void InitChart(List<string> datasList,bool isAddLabel = true)
         {
             ClearChartElement();

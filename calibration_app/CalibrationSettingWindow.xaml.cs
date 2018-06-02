@@ -126,7 +126,7 @@ namespace calibration_app
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-
+            this.DialogResult = true;
         }
     }
 }
