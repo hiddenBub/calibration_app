@@ -34,18 +34,16 @@
                 </Grid.RowDefinitions>
                 <!--图表开始-->
                 
-                <lvc:CartesianChart Grid.Row="0" Grid.Column="1" Name="calibratingChart" LegendLocation="Right" >
-                </lvc:CartesianChart>
-                <lvc:CartesianChart Grid.Row="1" Grid.Column="1" Name="calibratedChart" LegendLocation="Right" >
-                </lvc:CartesianChart>
+               
+                
                 <!--图表结束-->
              
             </Grid>
             
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom" >
-                <Button Content="数据清洗" Name="ClearButton" MaxHeight="40" Margin="5" Click="Button_Click"></Button>
+                <Button Content="数据清洗" Name="ClearButton" MaxHeight="40" Margin="5" Click="ClearButton_Click"></Button>
                 
-                <Button Content="数据校准" Name="CalibrateButton" MaxHeight="40" Margin="5"></Button>
+                <Button Content="数据校准" Name="CalibrateButton" MaxHeight="40" Margin="5" Click="CalibrateButton_Click"></Button>
             </StackPanel>
             
         </Grid>

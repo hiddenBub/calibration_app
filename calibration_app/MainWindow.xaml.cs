@@ -250,7 +250,15 @@ namespace calibration_app
                     {
                         WindowStartupLocation = WindowStartupLocation.CenterScreen
                     };
-                    window.ShowDialog();
+                    
+                    if ( window.DialogResult == null)
+                    {
+                        window.ShowDialog();
+                    }
+                    else
+                    {
+
+                    }
                 }
 
             }
@@ -886,7 +894,7 @@ namespace calibration_app
         /// <param name="item">数组中需要更改的数据</param>
         /// /// <param name="index">数组中需要更改的索引</param>
         /// <returns></returns>
-        public List<T> AddItem<T>(List<T> variable, T item, int index)
+        public static List<T> AddItem<T>(List<T> variable, T item, int index)
         {
             /*判断数组的长度*/
             // 如果数组长度大于需要更改的索引值，则说明该索引存在
