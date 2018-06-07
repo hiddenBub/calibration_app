@@ -262,6 +262,10 @@ namespace calibration_app
                 }
 
             }
+            else
+            {
+                MessageBox.Show("由于上次异常关闭，请重新采集后再导入");
+            }
             
         }
 
@@ -433,7 +437,10 @@ namespace calibration_app
             
             string filePath = "./Gather.txt";
 
+            // 初始化chartZone的Grid控件
+            AddCell(2, 2);
 
+            
             if (File.Exists(filePath))
             {
                 // 读取gather.txt文件获取起始和结束采集时间
@@ -456,11 +463,8 @@ namespace calibration_app
                 }
                 // 关闭streamreader
                 sr.Close();
-                // 初始化chartZone的Grid控件
-                AddCell(2, 2);
-
                 GetChart();
-                Tab.Children.Add(ChartZone);
+                
             }
             else
             {
@@ -468,10 +472,15 @@ namespace calibration_app
                 {
                     if (GatherTimer[i] == new DateTime()) GatherTimer[i] = null;
                 }
+                StreamReader sr = new StreamReader(Setting.Gather.DataPath, false);
+                List<string> lines = new List<string>();
+                lines.Add(sr.ReadLine());
+                lines.Add(sr.ReadLine());
+                InitChart(lines, false);
             }
-            
 
-            
+            Tab.Children.Add(ChartZone);
+
         }
 
         
@@ -1000,12 +1009,19 @@ namespace calibration_app
             string[] data = title.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             int count = data.Length;
+            List<string> labs = new List<string>
+            {
+                "辐射①",
+                "辐射②",
+                "辐射③",
+            };
 
             for (int startIndex = 2; startIndex < count; startIndex++)
             {
+                
                 LineSeries ls = new LineSeries
                 {
-                    Title = data[startIndex],// 设置集合标题
+                    Title = labs[startIndex - 2],// 设置集合标题
                     Values = new ChartValues<double> { },                // 初始化数据集
                     PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
                 };
@@ -1134,7 +1150,7 @@ namespace calibration_app
         private void GetChart()
         {
             
-            string filepath = GetFileName(DataType.CalibrationData,(DateTime)GatherTimer[0],GatherTimer[1]);
+            //string filepath = GetFileName(DataType.CalibrationData,(DateTime)GatherTimer[0],GatherTimer[1]);
 
             // 起始时间
             DateTime startTime = (DateTime)GatherTimer[0];

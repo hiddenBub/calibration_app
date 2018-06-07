@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "calibration_app", "calibration_app\calibration_app.csproj", "{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolarCalibration", "calibration_app\SolarCalibration.csproj", "{33BA9A60-B24B-43ED-B2FD-234E4DF1688E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

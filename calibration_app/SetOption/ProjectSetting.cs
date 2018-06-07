@@ -9,10 +9,14 @@ namespace calibration_app.SetOption
 {
     public class ProjectSetting
     {
-        public const string XmlPath = "./Setting.xml";
-       public static bool IsFirst()
-       {
-            return !File.Exists(XmlPath);
-        }
+        private int pid;
+        private string name;
+        private double lng;
+        private double lat;
+
+        public int Pid { get => pid; set => pid = value; }
+        public string Name { get => name; set => name = value; }
+        public double Lng { get => lng; set => lng = value; }
+        public double Lat { get => lat; set => lat = value; }
     }
 }

@@ -25,10 +25,12 @@ namespace calibration_app.SetOption
         public Project Project { get; set; }
     }
 
-    public class Project : Setting
+    public class Project 
     {
         //[XmlIgnore]
         //public Setting Parent = new Setting();
+        [XmlElement(ElementName = "SelectedIndex")]
+        public int SelectedIndex { get; set; }
 
         [XmlElement(ElementName = "Name")]
         public string Name { get; set; }
@@ -38,20 +40,57 @@ namespace calibration_app.SetOption
 
         [XmlElement(ElementName = "Lat")]
         public double Lat { get; set; }
+
+        [XmlArray(ElementName = "PjList")]
+        public ObservableCollection<Pj> PjList { get; set; }
     }
 
-    public class Gather :Setting
+    public class Pj
     {
-        //[XmlIgnore]
-        //public Setting Parent = new Setting();
+        /// <summary>
+        /// 项目ID
+        /// </summary>
+        [XmlAttribute (AttributeName = "Pid")]
+        public int Pid { get; set; }
+
+        /// <summary>
+        /// 项目名称
+        /// </summary>
+        [XmlAttribute(AttributeName = "Name")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 经度值
+        /// </summary>
+        [XmlAttribute(AttributeName = "Lng")]
+        public double Lng { get; set; }
+
+        /// <summary>
+        /// 纬度值
+        /// </summary>
+        [XmlAttribute(AttributeName = "Lat")]
+        public double Lat { get; set; }
+    }
+
+    public class Gather 
+    {
+        // [XmlIgnore]
+        // public Setting Parent = new Setting();
+
+            /// <summary>
+            /// 数据存储路径
+            /// </summary>
         [XmlElement(ElementName = "DataPath")]
         public string DataPath { get; set; }
 
+        /// <summary>
+        /// 数据列表
+        /// </summary>
         [XmlArray(ElementName = "ColumnList")]
         public ObservableCollection<Column> ColumnList { get; set; }
     }
 
-    public class Column : Gather, INotifyPropertyChanged
+    public class Column : INotifyPropertyChanged
     {
         //[XmlIgnore]
         //public Gather Parent = new Gather();

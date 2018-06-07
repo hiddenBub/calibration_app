@@ -17,26 +17,41 @@
                 <ColumnDefinition></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <GroupBox Header="项目设置" Margin="0,0,5,0" Grid.Column="0">
+                
                 <StackPanel HorizontalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="项目名称："></TextBlock>
-                        <TextBox Name="TbProName" Width="120"></TextBox>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <RadioButton Name="NewProject" Content="新建项目" GroupName="ProjectType" IsChecked="True"></RadioButton>
+                        <RadioButton Name="ExistedProject" Content="打开已有项目" GroupName="ProjectType"></RadioButton>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="设备经纬度："></TextBlock>
-                        <TextBox Name="TbProLng" Width="40"></TextBox>
-                        <TextBlock Text=" , "></TextBlock>
-                        <TextBox Name="TbProLat" Width="40"></TextBox>
+                    <StackPanel Name="New" Visibility="Visible">
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="项目名称："></TextBlock>
+                            <TextBox Name="TbProName" Width="120"></TextBox>
+                        </StackPanel>
+                        <TextBlock Foreground="Gray" Text="项目名称不能包括\ / * ? &quot; &lt; &gt; |" HorizontalAlignment="Center"></TextBlock>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="设备经纬度："></TextBlock>
+                            <TextBox Name="TbProLng" Width="100"></TextBox>
+                            <TextBlock Text=" , "></TextBlock>
+                            <TextBox Name="TbProLat" Width="100"></TextBox>
+                        </StackPanel>
                     </StackPanel>
+                    <WrapPanel Name="Existed" Visibility="Collapsed" HorizontalAlignment="Center">
+                        <ComboBox Name="ProjectCB">
+                            
+                        </ComboBox>
+                    </WrapPanel>
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="采集设置" Margin="5,0,0,0" Grid.Column="1">
                 <StackPanel HorizontalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Margin="5">
-                        <TextBlock Text="校准原数据存储位置："></TextBlock>
+                        <TextBlock Text="标准数据存储位置：" Margin="0,5,0,0"></TextBlock>
+                        <TextBox Name="FileTextBox" Text="C:\Campbellsci\LoggerNet" Margin="5" LostFocus="FileTextBox_LostFocus" Width="150" ></TextBox>
                         <Button Name="SelectFileBtn" Content="选择文件..." Click="SelectFileBtn_Click"></Button>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="5">
+                    <TextBlock Foreground="Gray" Text="请填写LoggerNet数据存储位置，默认为C:\Campbellsci\LoggerNet" HorizontalAlignment="Center"></TextBlock>
+                    <!--<StackPanel Orientation="Horizontal" Margin="5">
                         <TextBlock Text="采集数据类型："></TextBlock>
                         <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true" PreviewKeyDown="GridGather_PreviewKeyDown" LoadingRow="GridGather_LoadingRow" InitializingNewItem="GridGather_InitializingNewItem" Loaded="GridGather_Loaded">
                             <DataGrid.Columns>
@@ -47,7 +62,7 @@
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                    </StackPanel>
+                    </StackPanel>-->
                 </StackPanel>
             </GroupBox>
         </Grid>

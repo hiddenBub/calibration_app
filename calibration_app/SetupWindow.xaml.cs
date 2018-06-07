@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using calibration_app.SetOption;
 using System.Windows.Controls.Primitives;
+using calibration_app.lib;
 
 namespace calibration_app
 {
@@ -26,7 +27,12 @@ namespace calibration_app
     {
         public string EditingId { get; set; }
         public string FileName { get; set; }
-        ObservableCollection<Column> ColumnList { get; set; }   //动态数组
+
+        private ObservableCollection<Pj> projectList = new ObservableCollection<Pj>();
+        public ObservableCollection<Pj> ProjectList { get => projectList; set => projectList = value; }
+
+       
+        
 
         /// <summary>
         ///  程序主代码区
@@ -34,12 +40,53 @@ namespace calibration_app
         public SetupWindow()
         {
             InitializeComponent();
-           
-            ColumnList = new ObservableCollection<Column>();
-            this.DataContext = this;
+            // 获取设置实例
+            Setting setting = XmlHelper.DeserializeFromXml<Setting>(App.XmlPath);
+            if (setting != null) ProjectList = setting.Project.PjList;
             
-            GridGather.ItemsSource = ColumnList;
-            GridGather.Focus();
+            if (ProjectList.Count > 0)
+            {
+                ProjectCB.ItemsSource = setting.Project.PjList;
+                ProjectCB.SelectedValuePath = "Pid";
+                ProjectCB.DisplayMemberPath = "Name";
+                ProjectCB.SelectedIndex = 0;
+            }
+            else
+            {
+                Existed.Children.Clear();
+                TextBlock tb = new TextBlock
+                {
+                    Text = "当前还没有项目，请您创建新的项目以启动",
+                    Foreground = new SolidColorBrush(Colors.Gray),
+
+                };
+                Existed.Children.Add(tb);
+            }
+            
+            this.DataContext = this;
+            // 为单选框添加选中事件
+            NewProject.Checked += new RoutedEventHandler(Radio_Checked);
+            ExistedProject.Checked += new RoutedEventHandler(Radio_Checked);
+            
+        }
+
+        
+
+        void Radio_Checked(object sender, RoutedEventArgs e)
+        {
+            RadioButton btn = sender as RadioButton;
+            if (btn == null)
+                return;
+            if (btn.Name == "NewProject")
+            {
+                New.Visibility = Visibility.Visible;
+                Existed.Visibility = Visibility.Collapsed;
+            }
+            else if (btn.Name == "ExistedProject")
+            {
+                Existed.Visibility = Visibility.Visible;
+                New.Visibility = Visibility.Collapsed;
+            }
         }
 
         /// <summary>
@@ -54,6 +101,17 @@ namespace calibration_app
                 MessageBox.Show("项目名称不能为空");
                 return;
             }
+            string proName = TbProName.Text;
+
+            
+            foreach (char rInvalidChar in System.IO.Path.GetInvalidFileNameChars())
+            {
+                if (proName.Contains(rInvalidChar.ToString())) {
+                    MessageBox.Show("项目名称包含特殊字符：" + rInvalidChar.ToString());
+                    return;
+                }
+            }
+
 
             if (TbProLng.Text == "" || TbProLat.Text == "")
             {
@@ -61,30 +119,66 @@ namespace calibration_app
                 return;
             }
 
-            if (FileName == null)
+            if (!double.TryParse(TbProLat.Text, out double lat) || !double.TryParse(TbProLng.Text, out double lng))
+            {
+                MessageBox.Show("地理位置数据类型不正确");
+                return;
+            }
+
+            if (FileTextBox.Text == "")
             {
                 MessageBox.Show("必须设置采集源文件路径");
                 return;
             }
 
-            if (ColumnList[0].Name == null || ColumnList[0].Sensitivity == 0 || ColumnList[0].Frequency == 0)
+            string strFileName = FileTextBox.Text;
+
+            
+            
+            // 判断文件夹存在与否
+            if (!Directory.Exists(strFileName))
             {
-                MessageBox.Show("请设置需校准的数据");
+                MessageBox.Show("输入的路径不是一个文件夹", "错误");
                 return;
             }
+            // 文件夹存在则在文件夹下查找SEC级别的数据文件
+            else
+            {
+                try
+                {
+                    string[] files = Directory.GetFiles(strFileName, "*.dat");
+                    foreach (string dat in files)
+                    {
+                        string[] split = dat.Split(new char[] { '_', '.' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (split[split.Length - 2].ToLower()=="sec")
+                        {
+                            FileName = dat;
+                            break;
+                        }
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+                
+                return;
+            }
+
             // 项目设置
             Project project = new Project
             {
                 Name = TbProName.Text,
-                Lng = Convert.ToDouble(TbProLng.Text),
-                Lat = Convert.ToDouble(TbProLat.Text),
+                Lng = lng,
+                Lat = lat,
             };
             
             // 采集设置
             Gather gather = new Gather
             {
                 DataPath = FileName,
-                ColumnList = ColumnList,
+                //ColumnList = ColumnList,
             };
            
             // 设置总结点
@@ -96,11 +190,12 @@ namespace calibration_app
 
 
             // 将设置保存到setting.xml文件
-            SerializeToXml<Setting>("./Setting.xml", setting);
+            
+            XmlHelper.SerializeToXml<Setting>("./Setting.xml", setting);
 
             // 操作完成后设置返回数据并关闭窗口
             this.DialogResult = true;
-            this.Close();
+            
         }
 
         /// <summary>
@@ -111,7 +206,7 @@ namespace calibration_app
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
-            this.Close();
+            
         }
 
         /// <summary>
@@ -122,7 +217,7 @@ namespace calibration_app
         private void Window_Closed(object sender, EventArgs e)
         {
             this.DialogResult = false;
-            this.Close();
+            
         }
 
 
@@ -166,175 +261,135 @@ namespace calibration_app
             };
             if (ofd.ShowDialog() == true)
             {
-                 FileName = ofd.FileName;
+                FileTextBox.Text = ofd.FileName;
             }
         }
 
 
 
-        /// <summary>     
-        /// XML序列化某一类型到指定的文件   
-        /// /// </summary>   
-        /// /// <param name="filePath"></param>   
-        /// /// <param name="obj"></param>  
-        /// /// <param name="type"></param>   
-        public static void SerializeToXml<T>(string filePath, T obj)
-        {
-            try
-            {
-                using (System.IO.StreamWriter writer = new System.IO.StreamWriter(filePath)) {
-                    System.Xml.Serialization.XmlSerializerNamespaces ns = new System.Xml.Serialization.XmlSerializerNamespaces();
-                    //Add an empty namespace and empty value
-                    ns.Add("", ""); System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T)); xs.Serialize(writer, obj, ns); }
-            }
-            catch (Exception ex) { }
-        }
-        /// <summary>     
-        /// 从某一XML文件反序列化到某一类型   
-        /// </summary>    
-        /// <param name="filePath">待反序列化的XML文件名称</param>  
-        /// <param name="type">反序列化出的</param>  
-        /// <returns></returns>    
-        public static T DeserializeFromXml<T>(string filePath)
-        {
-            try
-            {
-                if (!System.IO.File.Exists(filePath))
-                    throw new ArgumentNullException(filePath + " not Exists");
-                using (System.IO.StreamReader reader = new System.IO.StreamReader(filePath))
-                {
-                    System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T));
-                    T ret = (T)xs.Deserialize(reader);
-                    return ret;
-                }
-            }
-            catch (Exception ex)
-            {
-                return default(T);
-            }
-        }
+        
 
-        private void GridGather_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
+        //private void GridGather_PreviewKeyDown(object sender, KeyEventArgs e)
+        //{
             
-            var uie = e.OriginalSource as UIElement;
-            if (e.Key == Key.Enter)
-            {
-                uie.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-                e.Handled = true;
-                GridGather.Focus();
+        //    var uie = e.OriginalSource as UIElement;
+        //    if (e.Key == Key.Enter)
+        //    {
+        //        uie.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+        //        e.Handled = true;
+        //        //GridGather.Focus();
                 
-                //MessageBox.Show(ColumnList.Count().ToString());
-            }
+        //        //MessageBox.Show(ColumnList.Count().ToString());
+        //    }
             
 
 
-            //if (e.Key == Key.F5)
-            //{
-            //    foreach (Student tq in StuList)
-            //    {
-            //        FinishJincang fc = new FinishJincang();
-            //        fc.RunNO = Convert.ToInt64(EditingId);//获得界面流程卡号 
-            //        try
-            //        {
-            //            fc.InNumber = Convert.ToDouble(tq.InNumber);
-            //            if (fc.InNumber == 0)
-            //            {
-            //                MessageBox.Show("第 " + tq.FId + " 行输入的的米数有误，请重新输入");
-            //                return;
-            //            }
-            //        }
-            //        catch
-            //        {
-            //            MessageBox.Show("第 " + tq.FId + " 行输入的的米数有误，请重新输入");
-            //            return;
-            //        }
-            //        fc.Import = 1;
-            //        fc.Indate = System.DateTime.Now;
+        //    //if (e.Key == Key.F5)
+        //    //{
+        //    //    foreach (Student tq in StuList)
+        //    //    {
+        //    //        FinishJincang fc = new FinishJincang();
+        //    //        fc.RunNO = Convert.ToInt64(EditingId);//获得界面流程卡号 
+        //    //        try
+        //    //        {
+        //    //            fc.InNumber = Convert.ToDouble(tq.InNumber);
+        //    //            if (fc.InNumber == 0)
+        //    //            {
+        //    //                MessageBox.Show("第 " + tq.FId + " 行输入的的米数有误，请重新输入");
+        //    //                return;
+        //    //            }
+        //    //        }
+        //    //        catch
+        //    //        {
+        //    //            MessageBox.Show("第 " + tq.FId + " 行输入的的米数有误，请重新输入");
+        //    //            return;
+        //    //        }
+        //    //        fc.Import = 1;
+        //    //        fc.Indate = System.DateTime.Now;
 
 
-            //        new FinishJincangDAL().Insert(fc);
-            //    }
-            //    System.Windows.Forms.MessageBox.Show("保存成功");
-
-
-
-            //}
+        //    //        new FinishJincangDAL().Insert(fc);
+        //    //    }
+        //    //    System.Windows.Forms.MessageBox.Show("保存成功");
 
 
 
+        //    //}
 
-            if (e.Key == Key.Back)  //删除行       
-            {
-                Int32 Row = GridGather.Items.IndexOf(GridGather.CurrentItem);
-                Int32 Col = GridGather.Columns.IndexOf(GridGather.CurrentColumn);
-                int i = 0;
-                int j = 0;
-                foreach (Column tq in ColumnList)  //删除选中行
-                {
-                        //MessageBox.Show(tq.Index.ToString());
-                    if (i == Row)
-                    {
-                        j = 0;
-                        foreach (System.Reflection.PropertyInfo p in tq.GetType().GetProperties())
-                        {
-                            if (j == Col)
-                            {
+
+
+
+        //    if (e.Key == Key.Back)  //删除行       
+        //    {
+        //        //Int32 Row = GridGather.Items.IndexOf(GridGather.CurrentItem);
+        //        //Int32 Col = GridGather.Columns.IndexOf(GridGather.CurrentColumn);
+        //        int i = 0;
+        //        int j = 0;
+        //        foreach (Column tq in ColumnList)  //删除选中行
+        //        {
+        //                //MessageBox.Show(tq.Index.ToString());
+        //            if (i == Row)
+        //            {
+        //                j = 0;
+        //                foreach (System.Reflection.PropertyInfo p in tq.GetType().GetProperties())
+        //                {
+        //                    if (j == Col)
+        //                    {
                                 
-                                if (p.Name != "Index")
-                                {
-                                    p.SetValue(tq, null);
-                                    uie.MoveFocus(new TraversalRequest(FocusNavigationDirection.Previous));
-                                }
+        //                        if (p.Name != "Index")
+        //                        {
+        //                            p.SetValue(tq, null);
+        //                            uie.MoveFocus(new TraversalRequest(FocusNavigationDirection.Previous));
+        //                        }
                                 
-                            }
-                            j++;
-                        }
-                    }
+        //                    }
+        //                    j++;
+        //                }
+        //            }
                         
-                    i++;
-                        //ColumnList.RemoveAt(Row);
-                        //break;
-                }
+        //            i++;
+        //                //ColumnList.RemoveAt(Row);
+        //                //break;
+        //        }
 
 
                 
 
 
-            }
+        //    }
 
 
-        }
+        //}
 
-        private void GridGather_LoadingRow(object sender, DataGridRowEventArgs e)
-        {
-            e.Row.Header = ColumnList.Count();
-        }
-
-
-        private void GridGather_InitializingNewItem(object sender, InitializingNewItemEventArgs e)
-        {
-            // 序列号
-            if (ColumnList == null || ColumnList.Count == 0)
-            {
-                ((Column)e.NewItem).Index = 1;
-            }
-            else
-            {
-                ((Column)e.NewItem).Index = ColumnList.Count;
-            }
-        }
+        //private void GridGather_LoadingRow(object sender, DataGridRowEventArgs e)
+        //{
+        //    e.Row.Header = ColumnList.Count();
+        //}
 
 
-        private void GridGather_Loaded(object sender, RoutedEventArgs e)
-        {            //加载的时候就控制焦点 在第一行
-            DataGridCell cell = GetCell(0, 1);
-            if (cell != null)
-            {
-                cell.Focus();
-                GridGather.BeginEdit();
-            }
-        }
+        //private void GridGather_InitializingNewItem(object sender, InitializingNewItemEventArgs e)
+        //{
+        //    // 序列号
+        //    if (ColumnList == null || ColumnList.Count == 0)
+        //    {
+        //        ((Column)e.NewItem).Index = 1;
+        //    }
+        //    else
+        //    {
+        //        ((Column)e.NewItem).Index = ColumnList.Count;
+        //    }
+        //}
+
+
+        //private void GridGather_Loaded(object sender, RoutedEventArgs e)
+        //{            //加载的时候就控制焦点 在第一行
+        //    DataGridCell cell = GetCell(0, 1);
+        //    if (cell != null)
+        //    {
+        //        cell.Focus();
+        //        //GridGather.BeginEdit();
+        //    }
+        //}
 
 
 
@@ -345,28 +400,28 @@ namespace calibration_app
         /// <param name="row"></param>
         /// <param name="column"></param>
         /// <returns></returns>
-        public DataGridCell GetCell(int row, int column)
-        {
-            DataGridRow rowContainer = GetRow(row);
+        //public DataGridCell GetCell(int row, int column)
+        //{
+        //    DataGridRow rowContainer = GetRow(row);
 
 
-            if (rowContainer != null)
-            {
-                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(rowContainer);
+        //    if (rowContainer != null)
+        //    {
+        //        DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(rowContainer);
 
 
-                // try to get the cell but it may possibly be virtualized
-                DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
-                if (cell == null)
-                {
-                    // now try to bring into view and retreive the cell
-                    GridGather.ScrollIntoView(rowContainer, GridGather.Columns[column]);
-                    cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
-                }
-                return cell;
-            }
-            return null;
-        }
+        //        // try to get the cell but it may possibly be virtualized
+        //        DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+        //        if (cell == null)
+        //        {
+        //            // now try to bring into view and retreive the cell
+        //            //GridGather.ScrollIntoView(rowContainer, GridGather.Columns[column]);
+        //            cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(column);
+        //        }
+        //        return cell;
+        //    }
+        //    return null;
+        //}
 
 
         /// <summary>
@@ -374,17 +429,17 @@ namespace calibration_app
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        public DataGridRow GetRow(int index)
-        {
-            DataGridRow row = (DataGridRow)GridGather.ItemContainerGenerator.ContainerFromIndex(index);
-            if (row == null)
-            {
-                // may be virtualized, bring into view and try again
-                GridGather.ScrollIntoView(GridGather.Items[index]);
-                row = (DataGridRow)GridGather.ItemContainerGenerator.ContainerFromIndex(index);
-            }
-            return row;
-        }
+        //public DataGridRow GetRow(int index)
+        //{
+        //    DataGridRow row = (DataGridRow)GridGather.ItemContainerGenerator.ContainerFromIndex(index);
+        //    if (row == null)
+        //    {
+        //        // may be virtualized, bring into view and try again
+        //        GridGather.ScrollIntoView(GridGather.Items[index]);
+        //        row = (DataGridRow)GridGather.ItemContainerGenerator.ContainerFromIndex(index);
+        //    }
+        //    return row;
+        //}
 
 
         /// <summary>
@@ -413,6 +468,15 @@ namespace calibration_app
             return child;
         }
 
-       
+        private void FileTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // 获取文件夹位置
+            string directory = FileTextBox.Text;
+            if (!Directory.Exists(directory))
+            {
+                MessageBox.Show("输入的路径不是一个文件夹", "错误");
+            }
+            
+        }
     }
 }

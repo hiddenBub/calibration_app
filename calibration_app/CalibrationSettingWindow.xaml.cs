@@ -63,10 +63,20 @@ namespace calibration_app
                     ColumnList.Add(new Column( i-2,ColC[i]));
                 }
             }
-            for (int i = 2; i < ColS.Count; i++)
+            List<string> labs = new List<string>
             {
-                sourceCol.Add(ColS[i]);
+                "辐射①",
+                "辐射②",
+                "辐射③",
+            };
+            if (SourceCol.Count == 0)
+            {
+                for (int i = 2; i < ColS.Count; i++)
+                {
+                    sourceCol.Add(labs[i - 2]);
+                }
             }
+            
             
             GridGather.ItemsSource = ColumnList;
         }
@@ -119,6 +129,7 @@ namespace calibration_app
         private void ConfirmButton_Click(object sender, RoutedEventArgs e)
         {
             Setting.Gather.ColumnList = ColumnList;
+            MainWindow.Setting.Gather.ColumnList = ColumnList;
             string settingPath = @"./Setting.xml";
             SerializeToXml(settingPath, Setting);
             this.DialogResult = true;

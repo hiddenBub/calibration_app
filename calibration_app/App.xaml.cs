@@ -14,6 +14,11 @@ namespace calibration_app
     /// </summary>
     public partial class App : Application
     {
+        public const string XmlPath = "./Setting.xml";
+        public static bool IsFirst()
+        {
+            return !System.IO.File.Exists(XmlPath);
+        }
         protected override void OnStartup(StartupEventArgs e)
         {
             Application.Current.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
@@ -23,27 +28,29 @@ namespace calibration_app
                 (dialogResult.Value == true))
             {
                 // 判断是否是第一次进入程序
-                bool isfirst =  ProjectSetting.IsFirst();
+                bool isfirst =  IsFirst();
                 // 第一次启动则调起启动配置窗口
                 if (isfirst)
                 {
                     
                     SetupWindow setup = new SetupWindow();
-                    bool? res = setup.ShowDialog();
-                    if ((res != true) ||
-                        (res != true))
+                    setup.ShowDialog();
+                    bool? res = setup.DialogResult;
+                    if (res != true)
                     {
                         this.Shutdown();
                     }
+                    else
+                    {
+                        base.OnStartup(e);
+                        Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                    }
+                } 
+                else
+                {
+                    
                 }
-                //MessageBox.Show("第一次启动");
-                // 设置关闭
-                
-                
-                base.OnStartup(e);
-                Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                
-                
+               
             }
             else
             {

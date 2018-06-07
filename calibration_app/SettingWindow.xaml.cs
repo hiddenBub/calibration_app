@@ -47,7 +47,7 @@ namespace calibration_app
             ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
             this.DataContext = this;
 
-            GridGather.ItemsSource = ColumnList;
+            //GridGather.ItemsSource = ColumnList;
         }
 
         public Setting Setting { get => setting; set => setting = value; }
@@ -121,11 +121,11 @@ namespace calibration_app
                 return;
             }
 
-            if (ColumnList[0].Name == null || ColumnList[0].Sensitivity == 0 || ColumnList[0].Frequency == 0)
-            {
-                MessageBox.Show("请设置需校准的数据");
-                return;
-            }
+            //if (ColumnList[0].Name == null || ColumnList[0].Sensitivity == 0 || ColumnList[0].Frequency == 0)
+            //{
+            //    MessageBox.Show("请设置需校准的数据");
+            //    return;
+            //}
             // 项目设置
             Project project = new Project
             {
@@ -138,7 +138,7 @@ namespace calibration_app
             Gather gather = new Gather
             {
                 DataPath = FileName,
-                ColumnList = ColumnList,
+                //ColumnList = ColumnList,
             };
 
             // 设置总结点

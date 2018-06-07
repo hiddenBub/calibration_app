@@ -36,7 +36,7 @@
                                 <TextBlock Text="校准原数据存储位置："></TextBlock>
                                 <Button Name="SelectFileBtn" Content="选择文件..." Click="SelectFileBtn_Click"></Button>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal">
+                            <!--<StackPanel Orientation="Horizontal">
 
                                 <TextBlock Text="采集数据类型："></TextBlock>
                                 <DataGrid Name="GridGather" AutoGenerateColumns="false" CanUserAddRows="true">
@@ -49,7 +49,7 @@
                                         SelectedItemBinding="{Binding Method,UpdateSourceTrigger=PropertyChanged}"></DataGridComboBoxColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
-                            </StackPanel>
+                            </StackPanel>-->
                         </StackPanel>
 
                     </TabItem>

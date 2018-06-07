@@ -28,7 +28,7 @@ namespace calibration_app
         {
             string uname = this.UserLogin.Text.Trim();
             string password = this.PwdLogin.Password;
-            if (uname == "administrator" && password == "topflagtec@2018")
+            if (uname == "topflag" && password == "topflag")
             {
                 this.DialogResult = true;
                 this.Close();

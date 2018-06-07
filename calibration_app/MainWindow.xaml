@@ -16,9 +16,9 @@
                     <MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>
                     <MenuItem Header="导入数据" Name="ImportDataMenu" >
                         <!--<MenuItem Header="导入源数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>-->
-                        <MenuItem Header="导入校准数据" Name="ImportCalibrationMenu" Click="ImportCalibration_Click"></MenuItem>
+                        <MenuItem Header="导入场站数据" Name="ImportCalibrationMenu" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
-                    <MenuItem Header="关闭" Name="CloseWindowMenu" Click="CloseWindowMenu_Click"></MenuItem>
+                    <!--<MenuItem Header="关闭" Name="CloseWindowMenu" Click="CloseWindowMenu_Click"></MenuItem>-->
                 </MenuItem>
                 <MenuItem Header="选项">
                     <MenuItem Header="设置" Name="SettingMenu" Click="SettingMenu_Click"></MenuItem>
@@ -32,7 +32,7 @@
                 </CheckBox>
                 <Menu>
                         <!--<MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>-->
-                    <MenuItem Header="导入校准数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
+                    <MenuItem Header="导入场站数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                 </Menu>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>
                 <!--<Button Name="USBBtn" Content="读取USB" Click="USBBtn_Click"/>-->

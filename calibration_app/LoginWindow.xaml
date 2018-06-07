@@ -16,15 +16,15 @@
     <Grid>
         <StackPanel VerticalAlignment="Center">
             <StackPanel Orientation="Horizontal" Height="100" HorizontalAlignment="Center" >
-                <TextBlock Text="旗云数据校准系统登录" FontSize="40" VerticalAlignment="Center"></TextBlock>
+                <TextBlock Text="测光站数据校准系统" FontSize="40" VerticalAlignment="Center"></TextBlock>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
                 <TextBlock Text="账号：" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="24"></TextBlock>
-                <TextBox Name="UserLogin" Text="administrator" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="100" ></TextBox>
+                <TextBox Name="UserLogin" Text="topflag" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="100" ></TextBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
                 <TextBlock Text="密码：" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="24"></TextBlock>
-                <PasswordBox Name="PwdLogin" Password="topflagtec@2018" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="100" ></PasswordBox>
+                <PasswordBox Name="PwdLogin" Password="topflag" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="100" ></PasswordBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5" >
                 <Button Name="BtnLogin" Content="登录" Width="60" Height="40" VerticalAlignment="Center" Margin="5" Click="BtnLogin_Click" ></Button>

@@ -20,13 +20,18 @@ using System.IO;
 using LiveCharts.Defaults;
 using calibration_app.SetOption;
 using System.Collections.ObjectModel;
+using Microsoft.Office.Interop.Word;
+using WordMLHelperUtil.Entity;
+using WordMLHelperUtil;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace calibration_app
 {
     /// <summary>
     /// CalibrationWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class CalibrationWindow : Window
+    public partial class CalibrationWindow : System.Windows.Window
     {
         public List<Geometry> Point = new List<Geometry>
         {
@@ -37,13 +42,11 @@ namespace calibration_app
             DefaultGeometries.Triangle,
             DefaultGeometries.Cross,
         };
-
-        private List<double> averageDeviation = new List<double>();
-
-        private List<double> averageAbsoluteDeviation = new List<double>();
-
-        private List<double> newSensitivity = new List<double>();
-
+        /// <summary>
+        /// 模板名称
+        /// </summary>
+        private string mubanFile = "muban.docx";
+        
         /// <summary>
         /// 图表LIST
         /// </summary>
@@ -52,7 +55,7 @@ namespace calibration_app
         /// <summary>
         /// 图表内数据集LIST
         /// </summary>
-        private List<SeriesCollection> seriesCollection = new List<SeriesCollection>();
+        private List<LiveCharts.SeriesCollection> seriesCollection = new List<LiveCharts.SeriesCollection>();
 
         /// <summary>
         /// 图标内标签LIST
@@ -65,13 +68,15 @@ namespace calibration_app
         /// </summary>
         private List<Func<double, string>> yFormatter = new List<Func<double, string>>();
 
+        private List<ColumnSetting> columnList = new List<ColumnSetting>();
+
+
         public List<CartesianChart> CartesianChart { get => cartesianChart; set => cartesianChart = value; }
-        public List<SeriesCollection> SeriesCollection { get => seriesCollection; set => seriesCollection = value; }
+        public List<LiveCharts.SeriesCollection> SeriesCollection { get => seriesCollection; set => seriesCollection = value; }
         public List<List<string>> Labels { get => labels; set => labels = value; }
         public List<Func<double, string>> YFormatter { get => yFormatter; set => yFormatter = value; }
-        public List<double> AverageDeviation { get => averageDeviation; set => averageDeviation = value; }
-        public List<double> AverageAbsoluteDeviation { get => averageAbsoluteDeviation; set => averageAbsoluteDeviation = value; }
-        public List<double> NewSensitivity { get => newSensitivity; set => newSensitivity = value; }
+        public List<ColumnSetting> ColumnList { get => columnList; set => columnList = value; }
+        public string MubanFile { get => mubanFile; set => mubanFile = value; }
 
         public CalibrationWindow()
         {
@@ -82,7 +87,12 @@ namespace calibration_app
         private void ImportCalibration_Click(object sender, RoutedEventArgs e)
         {
 
-
+            CartesianChart.Clear();
+            YFormatter.Clear();
+            SeriesCollection.Clear();
+            Labels.Clear();
+            ColumnList.Clear();
+            ChartZone.Children.Clear();
             bool IsGathering = MainWindow.IsGather;
             
             if (!File.Exists(MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1])))
@@ -117,7 +127,7 @@ namespace calibration_app
                     // 将数据填充至数据集中
                     oada.Fill(ds);
                     // 存储列表
-                    DataTable dt = ds.Tables[0];
+                    System.Data.DataTable dt = ds.Tables[0];
                     // 存储表头长度+1即与dat文件存储格式相同
                     int length = dt.Columns.Count + 1;
                     //"\"" + string.Join("\",\"", new string[] { Setting.Project.Name, Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString() }) + "\"",
@@ -174,8 +184,6 @@ namespace calibration_app
                         sw.WriteLine(str);
                     }
                     sw.Close();
-                    CalibrationSettingWindow csw = new CalibrationSettingWindow();
-                    csw.ShowDialog();
 
                     string sourceFile = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
                     string calibrationFile = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
@@ -220,7 +228,7 @@ namespace calibration_app
                         }
                         else
                         {
-                            seriesCollection.Add(new SeriesCollection { });
+                            seriesCollection.Add(new LiveCharts.SeriesCollection { });
                             if (SeriesCollection[0].Count > startIndex)
                             {
                                 seriesCollection[0][startIndex] = ls;
@@ -240,14 +248,14 @@ namespace calibration_app
                         LegendLocation = LegendLocation.Right,
                         AxisY = new AxesCollection
                 {
-                    new Axis{
+                    new LiveCharts.Wpf.Axis{
                         Title = "辐射强度,单位W/m²",
                         LabelFormatter = YFormatter[0],
                     }
                 },
                         AxisX = new AxesCollection
                 {
-                    new Axis
+                    new LiveCharts.Wpf.Axis
                     {
                         Title = "时间",
                         Labels = Labels[0]
@@ -267,6 +275,8 @@ namespace calibration_app
                     //////////////////////////////////////////////////////////////////////////////////////////
                     int i = 0;
                     int cdlIndex = 0;
+                    // 数据收缩级别，生产环境需要置1
+                    int shrink = 3;
                     // 遍历校准数据
                     for (int ii = 0; ii < sourceDataBody.Length; ii++)
                     {
@@ -295,7 +305,7 @@ namespace calibration_app
                                 }
 
                                 // 将取得的数据存入dataTemp
-                                DataTemp = MainWindow.AddSonItem<double>(DataTemp, x, scIndex);
+                                DataTemp = MainWindow.AddSonItem<double>(DataTemp, Math.Round(x / shrink, 3), scIndex);
 
                             }
                             // 数据有误则跳过该次循环
@@ -321,7 +331,7 @@ namespace calibration_app
                                     }
 
                                     // 将取得的数据存入dataTemp
-                                    CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, x, cdlIndex);
+                                    CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, Math.Round(x / shrink, 3), cdlIndex);
                                 }
                                 if (!correct) continue;
                                 for (int dli = DataTemp.Count - 1; dli >= 0; dli--)
@@ -371,19 +381,14 @@ namespace calibration_app
             }
         }
 
-        private void ExportBtn_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
+       
         private void CalibrationBtn_Click(object sender, RoutedEventArgs e)
         {
             CalibrationSettingWindow csw = new CalibrationSettingWindow();
+            csw.ShowDialog();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
+       
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -408,7 +413,10 @@ namespace calibration_app
             string[] data = stitle.Skip(2).Concat(ctitle.Skip(2)).ToArray();
 
             int count = data.Length;
-
+            data[0] = "辐射①";
+            data[1] = "辐射②";
+            data[2] = "辐射③";
+            
             for (int startIndex = 0; startIndex < count; startIndex++)
             {
                 LineSeries ls = new LineSeries
@@ -433,7 +441,7 @@ namespace calibration_app
                 }
                 else
                 {
-                    seriesCollection.Add(new SeriesCollection { });
+                    seriesCollection.Add(new LiveCharts.SeriesCollection { });
                     if (SeriesCollection[0].Count > startIndex)
                     {
                         seriesCollection[0][startIndex] = ls;
@@ -453,14 +461,14 @@ namespace calibration_app
                 LegendLocation = LegendLocation.Right,
                 AxisY = new AxesCollection
                 {
-                    new Axis{
+                    new LiveCharts.Wpf.Axis{
                         Title = "辐射强度,单位W/m²",
                         LabelFormatter = YFormatter[0],
                     }
                 },
                 AxisX = new AxesCollection
                 {
-                    new Axis
+                    new LiveCharts.Wpf.Axis
                     {
                         Title = "时间",
                         Labels = Labels[0]
@@ -481,7 +489,7 @@ namespace calibration_app
             int i = 0;
             int cdlIndex = 0;
             // 数据收缩级别，生产环境需要置1
-            int shrink = 3;
+            int shrink = 1;
             // 遍历校准数据
             for (int ii = 0; ii < sourceDataBody.Length; ii++)
             {
@@ -597,8 +605,7 @@ namespace calibration_app
         {
             if (CartesianChart.Count> 1)
             {
-                CartesianChart.RemoveAt(1);
-                SeriesCollection.RemoveAt(1);
+                return;
             }
             
             // 取得校准数据列的数量
@@ -622,7 +629,7 @@ namespace calibration_app
             //    PointGeometry = DefaultGeometries.Triangle,             // 取消点的图形标注
                
             //};
-            SeriesCollection.Add(new SeriesCollection { });
+            SeriesCollection.Add(new LiveCharts.SeriesCollection { });
             List<string> errorMessage = new List<string>();
             // 遍历数据
             for (int i = 0;i < CalibrationCollection.Count;i++ )
@@ -630,6 +637,7 @@ namespace calibration_app
                 // 获取shadow字段
                 string shadow = MainWindow.Setting.Gather.ColumnList[i].Shadow;
                 LiveCharts.Definitions.Series.ISeriesView lineSeries = new LineSeries();
+                
                 for (int j = 0;j < SourceColletction.Count; j++)
                 {
                     // 判断映射的线列并跳出循环
@@ -704,17 +712,17 @@ namespace calibration_app
                 LegendLocation = LegendLocation.Bottom,
                 AxisY = new AxesCollection
                 {
-                    new Axis{
-                        Title = "标准数据，W/m²",
+                    new LiveCharts.Wpf.Axis{
+                        Title = "场站数据，W/m²",
                         MinValue = minY - 100,
                         MaxValue = maxY + 100,
                     }
                 },
                 AxisX = new AxesCollection
                 {
-                    new Axis
+                    new LiveCharts.Wpf.Axis
                     {
-                        Title = "需校准数据，W/m²",
+                        Title = "标准数据，W/m²",
                         MinValue = minX - 100,
                         MaxValue = maxX + 100,
 
@@ -734,44 +742,347 @@ namespace calibration_app
 
         private void CalibrateButton_Click(object sender, RoutedEventArgs e)
         {
-            ObservableCollection<Column> columnList = MainWindow.Setting.Gather.ColumnList;
-            SeriesCollection calibrated = SeriesCollection[1];
-            int index = 0;
-            SeriesCollection.Add(new SeriesCollection());
-            foreach (ScatterSeries scatter in calibrated)
+            if (SeriesCollection.Count > 1)
             {
-                // 偏差和
-                double sum = 0;
-                // 绝对偏差和
-                double absSum = 0;
-                // 灵敏度和
-                double senSum = 0;
-                ScatterSeries ss = new ScatterSeries
+                if (CartesianChart.Count > 2)
                 {
-                    Title = scatter.Title,    // 设置集合标题
-                    Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
-                    PointGeometry = Point[index + 1],             // 取消点的图形标注
-                };
-                // 遍历数组求得数据和
-                for (int i = 0; i < scatter.Values.Count; i++)
-                {
-                    ObservablePoint op = (ObservablePoint)scatter.Values[i];
-                    // 标准数据
-                    double STDv = op.X;
-                    // 场站数据
-                    double STTv = op.Y;
-
-                    // 原灵敏度
-                    double oldSen = columnList[index].Sensitivity;
-
-                    sum += (STTv - STDv) / STDv;
-                    absSum += Math.Abs(STTv - STDv) / STDv;
-                    senSum += oldSen * STTv / STDv;
+                    return;
                 }
-                AverageDeviation.Add(sum / scatter.Values.Count);
-                AverageAbsoluteDeviation.Add(absSum / scatter.Values.Count);
-                AverageDeviation.Add(senSum / scatter.Values.Count);
+                ObservableCollection<SetOption.Column> columnList = MainWindow.Setting.Gather.ColumnList;
+                LiveCharts.SeriesCollection calibrated = SeriesCollection[1];
+                int index = 0;
+                SeriesCollection.Add(new LiveCharts.SeriesCollection());
+                foreach (ScatterSeries scatter in calibrated)
+                {
+                    // 偏差和
+                    double sum = 0;
+                    // 绝对偏差和
+                    double absSum = 0;
+                    // 灵敏度和
+                    double senSum = 0;
+                    ScatterSeries ss = new ScatterSeries
+                    {
+                        Title = scatter.Title,    // 设置集合标题
+                        Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
+                        PointGeometry = Point[index + 1],             // 取消点的图形标注
+                    };
+                    // 遍历数组求得数据和
+                    for (int i = 0; i < scatter.Values.Count; i++)
+                    {
+                        ObservablePoint op = (ObservablePoint)scatter.Values[i];
+                        // 标准数据
+                        double STDv = op.X;
+                        // 场站数据
+                        double STTv = op.Y;
+
+                        // 原灵敏度
+                        double oldSen = columnList[index].Sensitivity;
+
+                        sum += (STTv - STDv) / STDv;
+                        absSum += Math.Abs(STTv - STDv) / STDv;
+                        senSum += oldSen * STTv / STDv;
+                    }
+                    ColumnList.Add(new ColumnSetting {
+                        Name = columnList[index].Name,
+                        Frequency = columnList[index].Frequency,
+                        OldSensitivity = columnList[index].Sensitivity,
+                        NewSensitivity = Math.Round(senSum / scatter.Values.Count, 6),
+                        OldAverageDeviation = Math.Round(sum / scatter.Values.Count, 6),
+                        OldAverageAbsoluteDeviation = Math.Round(absSum / scatter.Values.Count, 6),
+                    });
+                    SeriesCollection[2].Add(ss);
+                    index++;
+                }
+                for (int si = 0; si < SeriesCollection[1].Count; si++)
+                {
+                    // 偏差和
+                    double sum = 0;
+                    // 绝对偏差和
+                    double absSum = 0;
+                    for (int sik = 0; sik < SeriesCollection[1][si].Values.Count; sik++)
+                    {
+                        ObservablePoint op = (ObservablePoint)SeriesCollection[1][si].Values[sik];
+                        // 标准数据
+                        double STDv = op.X;
+                        // 场站数据
+                        double STTv = op.Y;
+
+                        double fix = 1 - ColumnList[si].OldAverageDeviation;
+                        
+                        SeriesCollection[2][si].Values.Add(new ObservablePoint(op.X, op.Y * fix) );
+                        sum += (STTv - STDv) / STDv;
+                        absSum += Math.Abs(STTv - STDv) / STDv;
+                    }
+                    ColumnList[si].NewAverageDeviation = Math.Round(sum / SeriesCollection[1][si].Values.Count, 6);
+                    ColumnList[si].NewAverageAbsoluteDeviation = Math.Round(absSum / SeriesCollection[1][si].Values.Count, 6);
+                   
+                }
+                double minX = CartesianChart[1].AxisX[0].MinValue;
+                double minY = CartesianChart[1].AxisY[0].MinValue;
+                double maxX = CartesianChart[1].AxisX[0].MaxValue;
+                double maxY = CartesianChart[1].AxisY[0].MaxValue;
+                CartesianChart cartesian = new CartesianChart
+                {
+                    Series = SeriesCollection[2],
+                    LegendLocation = LegendLocation.Bottom,
+                    AxisY = new AxesCollection
+                {
+                    new LiveCharts.Wpf.Axis{
+                        Title = "场站数据，W/m²",
+                        MinValue = minY,
+                        MaxValue = maxY,
+                    }
+                },
+                    AxisX = new AxesCollection
+                {
+                    new LiveCharts.Wpf.Axis{
+                        Title = "标准数据，W/m²",
+                        MinValue = minX,
+                        MaxValue = maxX,
+                    }
+                }
+                };
+                this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian, 2);
+
+
+
+                // 将图表实例添加至ChartZone这个grid中去
+                this.ChartZone.Children.Add(cartesianChart[2]);
+                // 设定图表合并行参数
+                this.CartesianChart[2].SetValue(Grid.RowProperty, 1);
+                this.CartesianChart[2].SetValue(Grid.ColumnProperty, 1);
             }
+            else
+            {
+                MessageBox.Show("数据未清理无法校准", "警告");
+            }
+            
         }
-    }
+
+        private void ExportBtn_Click(object sender, RoutedEventArgs e)
+        {
+
+            
+            string message = "";
+            if (SeriesCollection.Count > 2)
+            {
+                try
+                {
+                    string templatePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, MubanFile);
+                    WordMLHelper wordMLHelper = new WordMLHelper();
+                    List<TagInfo> tagInfos = wordMLHelper.GetAllTagInfo(File.OpenRead(templatePath));
+                    for (int i = 0; i < tagInfos.Count; i++)
+                    {
+                        //填充域有两种类型,1:段落或图片,2:表格
+                        //对填充域填充时需先判断填充域类型
+                        if (tagInfos[i].Tbl == null)
+                        {
+                            if (string.Equals(tagInfos[i].TagTips.Trim(), "{Description}"))
+                            {
+                                TxtInfo txtInfo = new TxtInfo();
+                                txtInfo.Content = "数据采集起始时间：" + Labels[0][0] + ",数据采集结束时间：" + Labels[0][Labels[0].Count - 1] + Environment.NewLine;
+                                // 计算起止时间
+                                DateTime startTime = Convert.ToDateTime(Labels[0][0]);
+                                DateTime endTime = Convert.ToDateTime(Labels[0][Labels[0].Count - 1]);
+                                TimeSpan span = endTime.Subtract(startTime);
+                                TimeSpan pro = span;
+                                string spendTime = string.Empty;
+                                if (span.Days > 0)
+                                {
+                                    spendTime = span.Days.ToString() + "天";
+                                    span -= new TimeSpan(span.Days, 0, 0, 0);
+                                }
+                                if (span.Hours > 0 || spendTime.Length > 0)
+                                {
+                                    spendTime += span.Hours.ToString() + "小时";
+                                    span -= new TimeSpan(span.Hours, 0, 0);
+                                }
+                                if (span.Minutes > 0 || spendTime.Length > 0)
+                                {
+                                    spendTime += span.Minutes.ToString() + "分钟";
+                                    span -= new TimeSpan(0, span.Minutes, 0);
+                                }
+                                if (span.Seconds > 0 || spendTime.Length > 0)
+                                {
+                                    spendTime += span.Seconds.ToString() + "秒";
+                                }
+                                txtInfo.Content += "采集共计：" + spendTime + "，约采集" + pro.TotalMinutes.ToString() + "条数据，共清洗掉"
+                                    + (SeriesCollection[0][0].Values.Count - SeriesCollection[1][0].Values.Count).ToString() + "条数据";
+                                txtInfo.ForeColor = "0055A3";
+                                //txtInfo.HightLight = HighlightColor.Blue;
+                                tagInfos[i].AddContent(txtInfo);
+
+                            }
+                            else if (string.Equals(tagInfos[i].TagTips.Trim(), "{projectName}"))
+                            {
+                                TxtInfo txtInfo = new TxtInfo();
+                                txtInfo.Content = MainWindow.Setting.Project.Name;
+                                txtInfo.ForeColor = "0055A3";
+                                //txtInfo.HightLight = HighlightColor.Blue;
+                                tagInfos[i].AddContent(txtInfo);
+                            }
+
+                            else if (string.Equals(tagInfos[i].TagTips.Trim(), "{LngLat}"))
+                            {
+                                TxtInfo txtInfo = new TxtInfo();
+                                txtInfo.Content = MainWindow.Setting.Project.Lng.ToString() + "," + MainWindow.Setting.Project.Lat.ToString();
+                                txtInfo.ForeColor = "0055A3";
+                                //txtInfo.HightLight = HighlightColor.Blue;
+                                tagInfos[i].AddContent(txtInfo);
+                            }
+                            else if (string.Equals(tagInfos[i].TagTips.Trim(), "{snapshoot}"))
+                            {
+                                //Bitmap bit = new Bitmap(this.Width, this.Height);//实例化一个和窗体一样大的bitmap
+                                //Graphics g = Graphics.FromImage(bit);
+                                //g.CompositingQuality = CompositingQuality.HighQuality;//质量设为最高
+                                //g.CopyFromScreen(this.Left, this.Top, 0, 0, new Size(this.Width, this.Height));//保存整个窗体为图片
+                                //g.CopyFromScreen(panel游戏区.PointToScreen(Point.Empty), Point.Empty, panel游戏区.Size);//只保存某个控件（这里是panel游戏区）
+                                //bit.Save("weiboTemp.png");//默认保存格式为PNG，保存成jpg格式质量不是很好
+                                ImgInfo imgInfo = new ImgInfo();
+                                //imgInfo.ImgPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory
+                                //    , "./image/a1.jpg");
+                                //imgInfo.Width = 200;
+                                //imgInfo.Height = 200;
+                                //tagInfos[i].AddContent(imgInfo);
+                            }
+                        }
+                        else
+                        {
+                            TableStructureInfo tblInfo = tagInfos[i].Tbl;
+                            if (tagInfos[i].Seq >= 2)
+                            {
+                                for (int j = 0; j < ColumnList.Count; j++)
+                                {
+                                    RowStructureInfo row = new RowStructureInfo();
+
+                                    for (int k = 0; k < 5; k++)
+                                    {
+                                       
+                                        List<TxtInfo> txtInfo = new List<TxtInfo>();
+
+                                        string content = string.Empty;
+                                        switch (k)
+                                        {
+                                            case 0:
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = (j + 1).ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                
+                                                break;
+                                            case 1:
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = ColumnList[j].Name,
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                
+                                                break;
+                                            case 2:
+                                                txtInfo.Add(new TxtInfo {
+                                                    Content = ColumnList[j].OldSensitivity.ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                txtInfo.Add(new TxtInfo {
+                                                    Content = ColumnList[j].NewSensitivity.ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                break;
+                                            case 3:
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = (ColumnList[j].OldAverageDeviation * 100).ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = (ColumnList[j].NewAverageDeviation * 100).ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                break;
+                                            case 4:
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = (ColumnList[j].OldAverageAbsoluteDeviation * 100).ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                txtInfo.Add(new TxtInfo
+                                                {
+                                                    Content = (ColumnList[j].NewAverageAbsoluteDeviation * 100).ToString(),
+                                                    Size = 25,
+                                                    ForeColor = "0070C0",
+                                                });
+                                                break;
+                                            
+                                        }
+                                        if (txtInfo.Count == 1)
+                                        {
+                                            CellStructureInfo cell = new CellStructureInfo();
+                                            cell.AddContentLine(txtInfo[0]);
+                                            row.AddCell(cell);
+                                        }
+                                        else if (txtInfo.Count > 1)
+                                        {
+                                            for (int ti = 0; ti < txtInfo.Count; ti++)
+                                            {
+                                                CellStructureInfo cell = new CellStructureInfo();
+                                                cell.AddContent(txtInfo[ti]);
+                                                row.AddCell(cell);
+                                            }
+                                            
+                                            
+                                        }
+                                        
+                                        
+                                    }
+                                    tblInfo.AddRow(row);
+                                }
+                            }
+
+                        }
+                    }
+                    string dir = Environment.CurrentDirectory + "\\Report\\" + MainWindow.Setting.Project.Name;
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    string outPutPath = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + ".docx";
+                    if (!string.IsNullOrEmpty(outPutPath))
+                    {
+                        templatePath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory
+                           , mubanFile);
+                        wordMLHelper.GenerateWordDocument(File.OpenRead(templatePath)
+                            , outPutPath
+                            , tagInfos);
+
+                        Assistance.RemoveAllTmpFile();// 删除所有临时文件
+                                                      //Response.Redirect(Request.Url.AbsoluteUri);
+                    }
+                    MessageBox.Show("报告导出成功", "完成");
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(exc.Message);
+                }
+                
+               
+            }
+            else
+            {
+                MessageBox.Show("请先校准数据再导出报告", "错误");
+            }
+
+            }
+
+
+           
+        }
 }

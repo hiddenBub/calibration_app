@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace calibration_app.SetOption
 {
-    class ColumnSetting
+    public class ColumnSetting
     {
         private string name;
 
@@ -20,7 +20,15 @@ namespace calibration_app.SetOption
 
         private string method;
 
-       
+        private double oldAverageDeviation = 0;
+        private double newAverageDeviation = 0;
+        private double oldAverageAbsoluteDeviation = 0;
+        private double newAverageAbsoluteDeviation = 0;
+        private double oldSensitivity = 0;
+        private double newSensitivity = 0;
+
+
+
         public string Name { get => name; set => name = value; }
 
         public static List<string> DataType => dataType;
@@ -31,7 +39,12 @@ namespace calibration_app.SetOption
         public static List<string> CalculateMethod => calculateMethod;
 
         public string Method { get => method; set => method = value; }
-        
+        public double NewSensitivity { get => newSensitivity; set => newSensitivity = value; }
+        public double OldSensitivity { get => oldSensitivity; set => oldSensitivity = value; }
+        public double OldAverageDeviation { get => oldAverageDeviation; set => oldAverageDeviation = value; }
+        public double NewAverageDeviation { get => newAverageDeviation; set => newAverageDeviation = value; }
+        public double OldAverageAbsoluteDeviation { get => oldAverageAbsoluteDeviation; set => oldAverageAbsoluteDeviation = value; }
+        public double NewAverageAbsoluteDeviation { get => newAverageAbsoluteDeviation; set => newAverageAbsoluteDeviation = value; }
 
         public ColumnSetting ()
         {
