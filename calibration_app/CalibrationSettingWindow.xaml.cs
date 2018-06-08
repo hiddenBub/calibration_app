@@ -36,8 +36,8 @@ namespace calibration_app
             InitializeComponent();
             Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
             
-            string fileSource = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            string fileCalibration = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            string fileSource = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            string fileCalibration = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
             StreamReader srSource = new StreamReader(fileSource, false);
             StreamReader srCalibration = new StreamReader(fileCalibration, false);
             int length = 2;

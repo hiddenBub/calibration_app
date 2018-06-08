@@ -32,6 +32,7 @@ namespace calibration_app
     {
         public string FileName { get; set; }
         ObservableCollection<Column> ColumnList { get; set; }   //动态数组
+        ObservableCollection<Pj> ProjectList { get; set; }
         /// <summary>
         /// 系统设置
         /// </summary>
@@ -39,15 +40,69 @@ namespace calibration_app
         public SettingWindow()
         {
             InitializeComponent();
-            Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
+            Setting = lib.XmlHelper.DeserializeFromXml<Setting>(App.SettingPath);
             TbProName.Text = Setting.Project.Name;
             TbProLng.Text = Setting.Project.Lng.ToString();
             TbProLat.Text = Setting.Project.Lat.ToString();
             FileName = Setting.Gather.DataPath;
             ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
             this.DataContext = this;
+            // 获取设置实例
+            Setting setting = lib.XmlHelper.DeserializeFromXml<Setting>(App.SettingPath);
+            if (setting != null) ProjectList = setting.Project.PjList;
 
+            if (ProjectList.Count > 0)
+            {
+                ProjectCB.ItemsSource = setting.Project.PjList;
+                ProjectCB.SelectedValuePath = "Pid";
+                ProjectCB.DisplayMemberPath = "Name";
+                ProjectCB.SelectedIndex = 0;
+            }
+            else
+            {
+                Existed.Children.Clear();
+                TextBlock tb = new TextBlock
+                {
+                    Text = "当前还没有项目，请您创建新的项目以启动",
+                    Foreground = new SolidColorBrush(Colors.Gray),
+
+                };
+                Existed.Children.Add(tb);
+            }
+
+            this.DataContext = this;
+            // 为单选框添加选中事件
+            NewProject.Checked += new RoutedEventHandler(Radio_Checked);
+            ExistedProject.Checked += new RoutedEventHandler(Radio_Checked);
             //GridGather.ItemsSource = ColumnList;
+        }
+
+        void Radio_Checked(object sender, RoutedEventArgs e)
+        {
+            RadioButton btn = sender as RadioButton;
+            if (btn == null)
+                return;
+            if (btn.Name == "NewProject")
+            {
+                New.Visibility = Visibility.Visible;
+                Existed.Visibility = Visibility.Collapsed;
+            }
+            else if (btn.Name == "ExistedProject")
+            {
+                Existed.Visibility = Visibility.Visible;
+                New.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void FileTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // 获取文件夹位置
+            string directory = FileTextBox.Text;
+            if (!System.IO.Directory.Exists(directory))
+            {
+                MessageBox.Show("输入的路径不是一个文件夹", "错误");
+            }
+
         }
 
         public Setting Setting { get => setting; set => setting = value; }

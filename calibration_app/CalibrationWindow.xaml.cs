@@ -95,7 +95,7 @@ namespace calibration_app
             ChartZone.Children.Clear();
             bool IsGathering = MainWindow.IsGather;
             
-            if (!File.Exists(MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1])))
+            if (!File.Exists(MainWindow.GetFileName(MainWindow.DataStorage,MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1])))
             {
                 MessageBox.Show("请先采集源数据后再导入数据", "错误");
             }
@@ -161,7 +161,7 @@ namespace calibration_app
                         headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
                     }
                     // 生成校准数据文件名
-                    string fileName = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                    string fileName = MainWindow.GetFileName(MainWindow.DataStorage,MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
                     // 为该文件添加表头
                     MainWindow.AddDatHeader(headerNew, fileName);
 
@@ -185,8 +185,8 @@ namespace calibration_app
                     }
                     sw.Close();
 
-                    string sourceFile = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-                    string calibrationFile = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                    string sourceFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                    string calibrationFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
                     string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
                     string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
                     string[] sourceDataBody = GetDatBody(sourceDataList);
@@ -395,8 +395,8 @@ namespace calibration_app
             CalibrationSettingWindow csw = new CalibrationSettingWindow();
             csw.ShowDialog();
 
-            string sourceFile = MainWindow.GetFileName(MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            string calibrationFile = MainWindow.GetFileName(MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            string sourceFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+            string calibrationFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
             string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
             string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
             string[] sourceDataBody = GetDatBody(sourceDataList);
@@ -413,9 +413,7 @@ namespace calibration_app
             string[] data = stitle.Skip(2).Concat(ctitle.Skip(2)).ToArray();
 
             int count = data.Length;
-            data[0] = "辐射①";
-            data[1] = "辐射②";
-            data[2] = "辐射③";
+            
             
             for (int startIndex = 0; startIndex < count; startIndex++)
             {
@@ -698,7 +696,7 @@ namespace calibration_app
             }
             if (errorMessage.Count > 0)
             {
-                MessageBox.Show("数据列" + string.Join("、",errorMessage.ToArray()) + "无法校准，请重新采集", "警告");
+                MessageBox.Show("场站数据" + string.Join("、",errorMessage.ToArray()) + "无法校准，请重新采集", "警告");
                 return;
             }
 
@@ -802,12 +800,13 @@ namespace calibration_app
                     for (int sik = 0; sik < SeriesCollection[1][si].Values.Count; sik++)
                     {
                         ObservablePoint op = (ObservablePoint)SeriesCollection[1][si].Values[sik];
+                        double fix = 1 - ColumnList[si].OldAverageDeviation;
                         // 标准数据
                         double STDv = op.X;
                         // 场站数据
-                        double STTv = op.Y;
+                        double STTv = op.Y * fix;
 
-                        double fix = 1 - ColumnList[si].OldAverageDeviation;
+                        
                         
                         SeriesCollection[2][si].Values.Add(new ObservablePoint(op.X, op.Y * fix) );
                         sum += (STTv - STDv) / STDv;

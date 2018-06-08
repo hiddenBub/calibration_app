@@ -14,10 +14,13 @@ namespace calibration_app
     /// </summary>
     public partial class App : Application
     {
-        public const string XmlPath = "./Setting.xml";
+        public static string RootPath = Environment.CurrentDirectory;
+        public static string SettingPath = RootPath + "\\Setting.xml";
+        public static string DataStoragePath = RootPath + "\\DataStorage";
+        public static string ReportPath = RootPath + "\\Report";
         public static bool IsFirst()
         {
-            return !System.IO.File.Exists(XmlPath);
+            return !System.IO.File.Exists(SettingPath);
         }
         protected override void OnStartup(StartupEventArgs e)
         {

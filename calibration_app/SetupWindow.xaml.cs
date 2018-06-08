@@ -41,7 +41,7 @@ namespace calibration_app
         {
             InitializeComponent();
             // 获取设置实例
-            Setting setting = XmlHelper.DeserializeFromXml<Setting>(App.XmlPath);
+            Setting setting = XmlHelper.DeserializeFromXml<Setting>(App.SettingPath);
             if (setting != null) ProjectList = setting.Project.PjList;
             
             if (ProjectList.Count > 0)
@@ -149,44 +149,58 @@ namespace calibration_app
                     string[] files = Directory.GetFiles(strFileName, "*.dat");
                     foreach (string dat in files)
                     {
-                        string[] split = dat.Split(new char[] { '_', '.' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (split[split.Length - 2].ToLower()=="sec")
+                        string file = System.IO.Path.GetFileName(dat);
+                        if (file == "CR1000XSeries_GHI_SEC.dat")
                         {
                             FileName = dat;
                             break;
                         }
 
                     }
+                    if (FileName == null)
+                    {
+                        new Exception("该文件夹下无可用的dat数据文件");
+                    }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show(ex.Message, "错误");
+                    return;
                 }
                 
-                return;
+                
             }
-
-            // 项目设置
-            Project project = new Project
-            {
-                Name = TbProName.Text,
-                Lng = lng,
-                Lat = lat,
-            };
-            
-            // 采集设置
-            Gather gather = new Gather
-            {
-                DataPath = FileName,
-                //ColumnList = ColumnList,
-            };
-           
-            // 设置总结点
+            // 如果数据文件夹下不存在项目文件夹则新建
+            if (!Directory.Exists(App.DataStoragePath + "\\" + proName))
+                Directory.CreateDirectory(App.DataStoragePath + "\\" + proName);
+            // 如果报告文件夹下不存在项目文件夹则新建
+            if (!Directory.Exists(App.ReportPath + "\\" + proName))
+                Directory.CreateDirectory(App.ReportPath + "\\" + proName);
             Setting setting = new Setting
             {
-                Gather = gather,
-                Project = project
+                Gather = new Gather
+                {
+                    DataPath = FileName,
+                },
+                Project = new Project
+                {
+                    Name = proName,
+                    Lng = lng,
+                    Lat = lat,
+                    SelectedIndex = 0,
+                    PjList = new ObservableCollection<Pj>
+                    {
+                        new Pj
+                        {
+                            Name = proName,
+                            Lat = lat,
+                            Lng = lng,
+                            Pid  = 0,
+                        }
+                    }
+                }
             };
+            
 
 
             // 将设置保存到setting.xml文件
@@ -254,15 +268,39 @@ namespace calibration_app
             /// <param name="e"></param>
         private void SelectFileBtn_Click(object sender, RoutedEventArgs e)
         {
-
-            OpenFileDialog ofd = new OpenFileDialog
+            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog();
+            dialog.RootFolder = Environment.SpecialFolder.MyComputer;
+            
+            dialog.Description = "请选择Dat数据文件所在的文件夹";
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                Filter = "数据文件|*.dat"
-            };
-            if (ofd.ShowDialog() == true)
-            {
-                FileTextBox.Text = ofd.FileName;
+                if (string.IsNullOrEmpty(dialog.SelectedPath))
+                {
+                    MessageBox.Show(this, "文件夹路径不能为空", "提示");
+                    return;
+                }
+                string[] files = Directory.GetFiles(dialog.SelectedPath, "*.dat");
+                foreach (string dat in files)
+                {
+                    string file = System.IO.Path.GetFileName(dat);
+                    if ( file == "CR1000XSeries_GHI_SEC.dat")
+                    {
+                        FileTextBox.Text = dialog.SelectedPath;
+                        return;
+                    }
+                }
+                if (FileName == null)
+                {
+                    MessageBox.Show("该文件夹下无可用的dat数据文件","提示");
+                    return;
+                }
+                FileTextBox.Text = dialog.SelectedPath;
+                //this.LoadingText = "处理中...";
+                //this.LoadingDisplay = true;
+                //Action<string> a = DaoRuData;
+                //a.BeginInvoke(dialog.SelectedPath, asyncCallback, a);
             }
+            
         }
 
 

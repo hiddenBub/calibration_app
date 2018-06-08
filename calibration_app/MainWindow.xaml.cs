@@ -33,7 +33,7 @@ namespace calibration_app
     /// </summary>
     public partial class MainWindow : Window
     {
-
+        #region 字段
         private static bool isGather = false;
 
         /// <summary>
@@ -77,16 +77,12 @@ namespace calibration_app
         {
             SourceData = 0,
             CalibrationData = 1,
+            None = 2,
         };
 
-        private static string dataStorage = Environment.CurrentDirectory.ToString() + "\\DataStorage";
+        private static string dataStorage = string.Empty;
 
         private string dateTimeFormat = "yyyy-MM-dd hh：mm：ss";
-
-        /// <summary>
-        /// 连接字符串
-        /// </summary>
-        private static string strConn = "";
 
         /// <summary>
         /// 系统设置
@@ -123,6 +119,9 @@ namespace calibration_app
         /// 图标内Y轴数据格式化LIST
         /// </summary>
         private List<Func<double, string>> yFormatter = new List<Func<double, string>>();
+        #endregion
+
+        #region 属性
         public List<SeriesCollection> SeriesCollection { get => seriesCollection; set => seriesCollection = value; }
         public List<List<string>> Labels { get => labels; set => labels = value; }
         public List<Func<double, string>> YFormatter { get => yFormatter; set => yFormatter = value; }
@@ -132,12 +131,75 @@ namespace calibration_app
         public string DateTimeFormat { get => dateTimeFormat; set => dateTimeFormat = value; }
         public static List<DateTime?> GatherTimer { get => gatherTimer; set => gatherTimer = value; }
         public List<string[]> DataSource { get => dataSource; set => dataSource = value; }
+        #endregion
 
         public MainWindow()
         {
 
 
             InitializeComponent();
+
+        }
+
+        /// <summary>
+        /// 页面载入成功时的逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            first = false;
+            // 读取本地设置文件中的设置
+            Setting = lib.XmlHelper.DeserializeFromXml<Setting>(App.SettingPath);
+            DataStorage = App.DataStoragePath + "\\" + Setting.Project.PjList[Setting.Project.SelectedIndex].Name;
+
+            string filePath = "./Gather.txt";
+
+            // 初始化chartZone的Grid控件
+            AddCell(2, 2);
+
+
+            if (File.Exists(filePath))
+            {
+                // 读取gather.txt文件获取起始和结束采集时间
+                StreamReader sr = new StreamReader(filePath, Encoding.UTF8);
+
+                // 读取第一行
+                string first = sr.ReadLine();
+                // 将数据存至采集计时器中
+                GatherTimer[0] = Convert.ToDateTime(first);
+                string second = sr.ReadLine();
+                // 结束时间
+                if (second != null)
+                {
+                    GatherTimer[1] = Convert.ToDateTime(second);
+
+                }
+                else
+                {
+                    GatherTimer[1] = null;
+                }
+                // 关闭streamreader
+                sr.Close();
+                GetChart();
+
+            }
+            else
+            {
+                for (int i = 0; i < GatherTimer.Count; i++)
+                {
+                    if (GatherTimer[i] == new DateTime()) GatherTimer[i] = null;
+                }
+                StreamReader sr = new StreamReader(Setting.Gather.DataPath, false);
+                List<string> lines = new List<string>
+                {
+                    sr.ReadLine(),
+                    sr.ReadLine()
+                };
+                InitChart(lines, false);
+            }
+
+            Tab.Children.Add(ChartZone);
 
         }
 
@@ -154,118 +216,127 @@ namespace calibration_app
 
         private void ImportCalibration_Click(object sender, RoutedEventArgs e)
         {
-            bool IsGathering = isGather;
-            if (!File.Exists(GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1])))
+            try
             {
-                MessageBox.Show("请先采集源数据后再导入数据", "错误");
-            }
-            else if (IsGathering)
-            {
-                MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
-            }
-            else if (!IsGathering && GatherTimer.Count == 2 && GatherTimer[1] != null)
-            {
-                //打开一个文件选择框
-                OpenFileDialog ofd = new OpenFileDialog
+                if (GatherTimer[0] == null || GatherTimer[1] == null) new Exception("请先采集数据后再导入数据");
+                bool IsGathering = isGather;
+                if (!File.Exists(GetFileName(DataStorage, DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1])))
                 {
-                    Title = "Excel文件",
-                    FileName = "",
-                    Filter = "Excel文件(*.xls)|*"
-                };
-                ofd.ShowDialog();
-                // 获取文件路径
-                string filePath = ofd.FileName;
-                // 如果选择文件不为空
-                if (filePath != "" && filePath != null)
-                {
-                    // 配置连接字符串
-                    string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
-                    // 创建新的数据集
-                    DataSet ds = new DataSet();
-                    // 获取数据
-                    OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
-                    // 将数据填充至数据集中
-                    oada.Fill(ds);
-                    // 存储列表
-                    DataTable dt = ds.Tables[0];
-                    // 存储表头长度+1即与dat文件存储格式相同
-                    int length = dt.Columns.Count + 1;
-                    //"\"" + string.Join("\",\"", new string[] { Setting.Project.Name, Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString() }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "TIMESTAMP", "RECORD", "GHI_80A", "GHI_80B", "GHI_80C" }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "TS", "RN", "W/m2", "W/m2", "W/m2" }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "", "", "Avg", "Avg", "Avg" }) + "\"",
-                    // 初始化dat文件头
-                    List<string[]> header = new List<string[]>
-                    {
-                        new string[] { Setting.Project.Name,Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString()},
-                        new string[length],
-                        new string[length],
-                        new string[length],
-                    };
-                    // 填充字段之前的数据
-                    header[1][0] = "TIMESTAMP"; header[1][1] = "RECORD";
-                    header[2][0] = "TS"; header[2][1] = "RN";
-                    header[3][0] = ""; header[3][1] = "";
-                    // 填充字段
-                    for (int j = 1; j < dt.Columns.Count; j++)
-                    {
-                        header[1][j + 1] = dt.Columns[j].ToString();
-                        header[2][j + 1] = "W/m2";
-                        header[3][j + 1] = "Avg";
-                    }
-                    // 创建以行为区分的数据列表
-                    List<string> headerNew = new List<string>();
-                    // 循环遍历原列表并将字符串数据存至新列表
-                    for (int k = 0; k < header.Count; k++)
-                    {
-                        headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
-                    }
-                    // 生成校准数据文件名
-                    string fileName = GetFileName(DataType.CalibrationData, (DateTime)GatherTimer[0], GatherTimer[1]);
-                    if (File.Exists(fileName)) File.Delete(fileName);
-                    // 为该文件添加表头
-                    AddDatHeader(headerNew, fileName);
-
-                    List<String[]> list = new List<string[]>();
-                    // 生成文件写入实例，准备写入文件
-                    
-                    StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-
-                        //Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
-                        // 初始化数据(单行)字符串
-                        string str = "\"" + DateFormat(Convert.ToDateTime(dt.Rows[i][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + i;
-                        // 填充数据
-                        for (int ii = 1; ii < dt.Columns.Count; ii++)
-                        {
-                            str += "," + dt.Rows[i][dt.Columns[ii]];
-                        }
-                        // 添加行结束符
-                        //str += Environment.NewLine;
-                        sw.WriteLine(str);
-                    }
-                    sw.Close();
-                    CalibrationWindow window = new CalibrationWindow
-                    {
-                        WindowStartupLocation = WindowStartupLocation.CenterScreen
-                    };
-                    
-                    if ( window.DialogResult == null)
-                    {
-                        window.ShowDialog();
-                    }
-                    else
-                    {
-
-                    }
+                    MessageBox.Show("请先采集源数据后再导入数据", "错误");
                 }
+                else if (IsGathering)
+                {
+                    MessageBox.Show("数据采集中，请结束采集后导入需校准数据", "错误");
+                }
+                else if (!IsGathering && GatherTimer.Count == 2 && GatherTimer[1] != null)
+                {
+                    //打开一个文件选择框
+                    OpenFileDialog ofd = new OpenFileDialog
+                    {
+                        Title = "Excel文件",
+                        FileName = "",
+                        Filter = "Excel文件(*.xls)|*"
+                    };
+                    ofd.ShowDialog();
+                    // 获取文件路径
+                    string filePath = ofd.FileName;
+                    // 如果选择文件不为空
+                    if (filePath != "" && filePath != null)
+                    {
+                        // 配置连接字符串
+                        string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
+                        // 创建新的数据集
+                        DataSet ds = new DataSet();
+                        // 获取数据
+                        OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
+                        // 将数据填充至数据集中
+                        oada.Fill(ds);
+                        // 存储列表
+                        DataTable dt = ds.Tables[0];
+                        // 存储表头长度+1即与dat文件存储格式相同
+                        int length = dt.Columns.Count + 1;
+                        //"\"" + string.Join("\",\"", new string[] { Setting.Project.Name, Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString() }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "TIMESTAMP", "RECORD", "GHI_80A", "GHI_80B", "GHI_80C" }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "TS", "RN", "W/m2", "W/m2", "W/m2" }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "", "", "Avg", "Avg", "Avg" }) + "\"",
+                        // 初始化dat文件头
+                        List<string[]> header = new List<string[]>
+                    {
+                        new string[] { Setting.Project.PjList[Setting.Project.SelectedIndex].Name, Setting.Project.PjList[Setting.Project.SelectedIndex].Lng.ToString(), Setting.Project.PjList[Setting.Project.SelectedIndex].Lat.ToString()},
+                        new string[length],
+                        new string[length],
+                        new string[length],
+                    };
+                        // 填充字段之前的数据
+                        header[1][0] = "TIMESTAMP"; header[1][1] = "RECORD";
+                        header[2][0] = "TS"; header[2][1] = "RN";
+                        header[3][0] = ""; header[3][1] = "";
+                        // 填充字段
+                        for (int j = 1; j < dt.Columns.Count; j++)
+                        {
+                            header[1][j + 1] = dt.Columns[j].ToString();
+                            header[2][j + 1] = "W/m2";
+                            header[3][j + 1] = "Avg";
+                        }
+                        // 创建以行为区分的数据列表
+                        List<string> headerNew = new List<string>();
+                        // 循环遍历原列表并将字符串数据存至新列表
+                        for (int k = 0; k < header.Count; k++)
+                        {
+                            headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
+                        }
+                        // 生成校准数据文件名
+                        string fileName = GetFileName(DataStorage, DataType.CalibrationData, (DateTime)GatherTimer[0], GatherTimer[1]);
+                        if (File.Exists(fileName)) File.Delete(fileName);
+                        // 为该文件添加表头
+                        AddDatHeader(headerNew, fileName);
 
+                        List<String[]> list = new List<string[]>();
+                        // 生成文件写入实例，准备写入文件
+
+                        StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
+                        for (int i = 0; i < dt.Rows.Count; i++)
+                        {
+
+                            //Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
+                            // 初始化数据(单行)字符串
+                            string str = "\"" + DateFormat(Convert.ToDateTime(dt.Rows[i][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + i;
+                            // 填充数据
+                            for (int ii = 1; ii < dt.Columns.Count; ii++)
+                            {
+                                str += "," + dt.Rows[i][dt.Columns[ii]];
+                            }
+                            // 添加行结束符
+                            //str += Environment.NewLine;
+                            sw.WriteLine(str);
+                        }
+                        sw.Close();
+                        CalibrationWindow window = new CalibrationWindow
+                        {
+                            WindowStartupLocation = WindowStartupLocation.CenterScreen
+                        };
+
+                        if (window.DialogResult == null)
+                        {
+                            window.ShowDialog();
+                        }
+                        else
+                        {
+
+                        }
+                    }
+
+                }
+                else
+                {
+                    MessageBox.Show("由于上次异常关闭，请重新采集后再导入");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("由于上次异常关闭，请重新采集后再导入");
+                MessageBox.Show(ex.Message);
             }
+            
             
         }
 
@@ -366,17 +437,18 @@ namespace calibration_app
 
 
                 // 判断数据文件存储文件夹是否存在不存在创建文件夹
-                if (!Directory.Exists(DataStorage)) Directory.CreateDirectory(DataStorage);
+                string ProjectDirectory = App.DataStoragePath + "\\" + Setting.Project.PjList[Setting.Project.SelectedIndex].Name;
+                if (!Directory.Exists(ProjectDirectory)) Directory.CreateDirectory(ProjectDirectory);
 
 
                 // 设置文件名、
-                string fileName = GetFileName(DataType.SourceData, now, null);
+                string fileName = GetFileName(DataStorage,DataType.SourceData, now, null);
                 List<string> header = new List<string>
                 {
                     "\"" + string.Join("\",\"", new string[] { Setting.Project.Name,Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString()}) + "\"",
-                    "\"" + string.Join("\",\"", new string[] { "TIMESTAMP","RECORD","GHI_80A","GHI_80B","GHI_80C" }) + "\"",
-                    "\"" + string.Join("\",\"", new string[] {"TS","RN","W/m2","W/m2","W/m2" }) + "\"",
-                    "\"" + string.Join("\",\"", new string[] {"","","Avg", "Avg", "Avg" }) + "\"",
+                    "\"" + string.Join("\",\"", new string[] { "TIMESTAMP","RECORD","辐射①", "辐射②", "辐射③" }) + "\"",
+                    "\"" + string.Join("\",\"", new string[] { "TS","RN","W/m2","W/m2","W/m2" }) + "\"",
+                    "\"" + string.Join("\",\"", new string[] { "","","Avg", "Avg", "Avg" }) + "\"",
                 };
                 // 创建数据文件并写入文件头
                 AddDatHeader(header, fileName);
@@ -409,8 +481,8 @@ namespace calibration_app
                 fs.Flush();
                 fs.Close();
                 // 获取数据文件名
-                string oldFileName = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
-                string newFileName = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1]);
+                string oldFileName = GetFileName(DataStorage,DataType.SourceData, (DateTime)GatherTimer[0], null);
+                string newFileName = GetFileName(DataStorage, DataType.SourceData, (DateTime)GatherTimer[0], GatherTimer[1]);
                 File.Move(oldFileName, newFileName);
                 // 更新按钮显示
                 GatherCB.Content = GatherMenu.Header = "开始采集";
@@ -424,64 +496,7 @@ namespace calibration_app
 
 
 
-        /// <summary>
-        /// 页面载入成功时的逻辑
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            first = false;
-            // 读取本地设置文件中的设置
-            Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
-            
-            string filePath = "./Gather.txt";
-
-            // 初始化chartZone的Grid控件
-            AddCell(2, 2);
-
-            
-            if (File.Exists(filePath))
-            {
-                // 读取gather.txt文件获取起始和结束采集时间
-                StreamReader sr = new StreamReader(filePath, Encoding.UTF8);
-
-                // 读取第一行
-                string first = sr.ReadLine();
-                // 将数据存至采集计时器中
-                GatherTimer[0] = Convert.ToDateTime(first);
-                string second = sr.ReadLine();
-                // 结束时间
-                if (second != null)
-                {
-                    GatherTimer[1] = Convert.ToDateTime(second);
-
-                }
-                else
-                {
-                    GatherTimer[1] = null;
-                }
-                // 关闭streamreader
-                sr.Close();
-                GetChart();
-                
-            }
-            else
-            {
-                for( int i = 0;i < GatherTimer.Count;i++)
-                {
-                    if (GatherTimer[i] == new DateTime()) GatherTimer[i] = null;
-                }
-                StreamReader sr = new StreamReader(Setting.Gather.DataPath, false);
-                List<string> lines = new List<string>();
-                lines.Add(sr.ReadLine());
-                lines.Add(sr.ReadLine());
-                InitChart(lines, false);
-            }
-
-            Tab.Children.Add(ChartZone);
-
-        }
+        
 
         
 
@@ -509,30 +524,7 @@ namespace calibration_app
             //bit.Save("weiboTemp.png");//默认保存格式为PNG，保存成jpg格式质量不是很好
         }
 
-        /// <summary>     
-        /// 从某一XML文件反序列化到某一类型   
-        /// </summary>    
-        /// <param name="filePath">待反序列化的XML文件名称</param>  
-        /// <param name="type">反序列化出的</param>  
-        /// <returns></returns>    
-        public static T DeserializeFromXml<T>(string filePath)
-        {
-            try
-            {
-                if (!System.IO.File.Exists(filePath))
-                    throw new ArgumentNullException(filePath + " not Exists");
-                using (System.IO.StreamReader reader = new System.IO.StreamReader(filePath))
-                {
-                    System.Xml.Serialization.XmlSerializer xs = new System.Xml.Serialization.XmlSerializer(typeof(T));
-                    T ret = (T)xs.Deserialize(reader);
-                    return ret;
-                }
-            }
-            catch (Exception ex)
-            {
-                return default(T);
-            }
-        }
+        
 
         /// <summary>
         /// 切换选项卡后的逻辑
@@ -686,7 +678,7 @@ namespace calibration_app
                         // 将字符串转换为byte型数据
                         byte[] by = Encoding.Default.GetBytes(line);
                         // 获取当前需要操作的文件名
-                        string fn = GetFileName(DataType.SourceData, (DateTime)GatherTimer[0], null);
+                        string fn = GetFileName(DataStorage, DataType.SourceData, (DateTime)GatherTimer[0], null);
                         // 以追加写方式打开文件流
                         FileStream fileStream = new FileStream(fn, FileMode.Append, FileAccess.Write);
                         // 写数据
@@ -722,27 +714,28 @@ namespace calibration_app
         /// <param name="startTime"></param>
         /// <param name="endTime"></param>
         /// <returns></returns>
-        public static string GetFileName(DataType type, DateTime startTime, DateTime? endTime)
+        public static string GetFileName(string RootPath, DataType type, DateTime startTime, DateTime? endTime)
         {
             // 生成字符串
-            string result = Setting.Project.Name;
+            StringBuilder sb = new StringBuilder();
+            
             // 依据数据类型生成文件名
             switch (type)
             {
                 case DataType.SourceData:
-                    result += "_" + DataType.SourceData.ToString();
+                    sb.Append("_" + DataType.SourceData.ToString());
                     break;
                 case DataType.CalibrationData:
-                    result += "_" + DataType.CalibrationData.ToString();
+                    sb.Append("_" + DataType.CalibrationData.ToString());
                     break;
             }
-            result += "_" + DateFormat(startTime);
+            sb.Append("_" + DateFormat(startTime));
             // 判断是否传入了结束时间
-            if (endTime != null) result += "_" + DateFormat((DateTime)endTime);
-            result += ".dat";
-            result = DataStorage + "\\" + result;
+            if (endTime != null) sb.Append("_" + DateFormat((DateTime)endTime));
+            sb.Append(".dat");
+            sb.Insert(0, RootPath + "\\");
             // 返回文件名
-            return result;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -1009,19 +1002,14 @@ namespace calibration_app
             string[] data = title.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             int count = data.Length;
-            List<string> labs = new List<string>
-            {
-                "辐射①",
-                "辐射②",
-                "辐射③",
-            };
+            
 
             for (int startIndex = 2; startIndex < count; startIndex++)
             {
                 
                 LineSeries ls = new LineSeries
                 {
-                    Title = labs[startIndex - 2],// 设置集合标题
+                    Title = data[startIndex],// 设置集合标题
                     Values = new ChartValues<double> { },                // 初始化数据集
                     PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
                 };
@@ -1163,7 +1151,7 @@ namespace calibration_app
             // 获取当前周期内的频率
             
             // 获取数据
-            string dataPath = GetFileName(DataType.SourceData, startTime, endTime);
+            string dataPath = GetFileName(DataStorage, DataType.SourceData, startTime, endTime);
             if (!File.Exists(dataPath))  return; 
             string[] dataList = File.ReadAllLines(dataPath, Encoding.Default);
             // 设置曲线对象

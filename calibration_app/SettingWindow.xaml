@@ -18,24 +18,39 @@
                 <TabControl  x:Name="ColTab" DockPanel.Dock="Top" Margin="5"  TabStripPlacement="Left" >
                     <TabItem Header="项目" MaxHeight="20" MaxWidth="78">
                         <StackPanel HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Margin="5">
-                                <TextBlock Text="项目名称："></TextBlock>
-                                <TextBox Name="TbProName" Width="120" ></TextBox>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <RadioButton Name="NewProject" Content="新建项目" GroupName="ProjectType" IsChecked="True"></RadioButton>
+                                <RadioButton Name="ExistedProject" Content="打开已有项目" GroupName="ProjectType"></RadioButton>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="5">
-                                <TextBlock Text="设备经纬度："></TextBlock>
-                                <TextBox Name="TbProLng" Width="40"></TextBox>
-                                <TextBlock Text=" , "></TextBlock>
-                                <TextBox Name="TbProLat" Width="40"></TextBox>
+                            <StackPanel Name="New" Visibility="Visible">
+                                <StackPanel Orientation="Horizontal" Margin="5">
+                                    <TextBlock Text="项目名称："></TextBlock>
+                                    <TextBox Name="TbProName" Width="120"></TextBox>
+                                    <TextBlock Foreground="Gray" Text="项目名称不能包括\ / * ? &quot; &lt; &gt; |" HorizontalAlignment="Center"></TextBlock>
+                                </StackPanel>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="5">
+                                    <TextBlock Text="设备经纬度："></TextBlock>
+                                    <TextBox Name="TbProLng" Width="100"></TextBox>
+                                    <TextBlock Text=" , "></TextBlock>
+                                    <TextBox Name="TbProLat" Width="100"></TextBox>
+                                </StackPanel>
                             </StackPanel>
+                            <WrapPanel Name="Existed" Visibility="Collapsed" HorizontalAlignment="Center">
+                                <ComboBox Name="ProjectCB">
+
+                                </ComboBox>
+                            </WrapPanel>
                         </StackPanel>
                     </TabItem>
                     <TabItem Header="采集" MaxHeight="20" MaxWidth="78">
                         <StackPanel Margin="5" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="校准原数据存储位置："></TextBlock>
+                            <StackPanel Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="标准数据存储位置：" Margin="0,5,0,0"></TextBlock>
+                                <TextBox Name="FileTextBox" Text="C:\Campbellsci\LoggerNet" Margin="5" LostFocus="FileTextBox_LostFocus" Width="150" ></TextBox>
                                 <Button Name="SelectFileBtn" Content="选择文件..." Click="SelectFileBtn_Click"></Button>
                             </StackPanel>
+                            <TextBlock Foreground="Gray" Text="请填写LoggerNet数据存储位置，默认为C:\Campbellsci\LoggerNet" HorizontalAlignment="Center"></TextBlock>
                             <!--<StackPanel Orientation="Horizontal">
 
                                 <TextBlock Text="采集数据类型："></TextBlock>

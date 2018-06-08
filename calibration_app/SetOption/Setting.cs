@@ -45,7 +45,7 @@ namespace calibration_app.SetOption
         public ObservableCollection<Pj> PjList { get; set; }
     }
 
-    public class Pj
+    public class Pj 
     {
         /// <summary>
         /// 项目ID
