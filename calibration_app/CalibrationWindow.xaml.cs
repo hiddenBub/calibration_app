@@ -260,7 +260,9 @@ namespace calibration_app
                         Title = "时间",
                         Labels = Labels[0]
                     }
-                }
+                },
+                        DisableAnimations = true,
+                        DataTooltip = null
                     };
                     CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian);
 
@@ -471,7 +473,10 @@ namespace calibration_app
                         Title = "时间",
                         Labels = Labels[0]
                     }
-                }
+                },
+                DisableAnimations = true,
+                Hoverable = false,
+                //DataTooltip = null,
             };
             CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian);
 
@@ -725,7 +730,10 @@ namespace calibration_app
                         MaxValue = maxX + 100,
 
                     }
-                }
+                },
+                Hoverable = false,
+                DisableAnimations = true,
+                
             };
             this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian,1);
 
@@ -839,7 +847,9 @@ namespace calibration_app
                         MinValue = minX,
                         MaxValue = maxX,
                     }
-                }
+                },
+                    DisableAnimations = true,
+                    DataTooltip = null
                 };
                 this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian, 2);
 
