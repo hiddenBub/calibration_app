@@ -60,7 +60,10 @@
     <GenerateManifests>true</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Aspose.Cells, Version=7.4.1.0, Culture=neutral, PublicKeyToken=716fcc553a201e56, processorArchitecture=MSIL">
@@ -77,7 +80,7 @@
     </Reference>
     <Reference Include="DocumentFormat.OpenXml, Version=2.0.5022.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\TrainingAccounter\WordMLHelper\bin\Debug\DocumentFormat.OpenXml.dll</HintPath>
+      <HintPath>.\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
     <Reference Include="LibUsb.Common, Version=2.2.10.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LibUsb.Common.2.2.10-r112\lib\net45\LibUsb.Common.dll</HintPath>
@@ -120,7 +123,7 @@
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="WordMLHelper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\TrainingAccounter\WordMLHelper\bin\Debug\WordMLHelper.dll</HintPath>
+      <HintPath>.\WordMLHelper.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +138,9 @@
       <DependentUpon>CalibrationWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="CaseVM.cs" />
+    <Compile Include="CreateUser.xaml.cs">
+      <DependentUpon>CreateUser.xaml</DependentUpon>
+    </Compile>
     <Compile Include="lib\ExDataGrid.cs" />
     <Compile Include="lib\IEntitySerialization.cs" />
     <Compile Include="lib\XmlHelper.cs" />
@@ -161,6 +167,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="CalibrationWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CreateUser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

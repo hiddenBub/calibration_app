@@ -1232,5 +1232,16 @@ namespace calibration_app
         {
 
         }
+
+        /// <summary>
+        /// 点击创建新用户事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void NewUser_Click(object sender, RoutedEventArgs e)
+        {
+            CreateUser cu = new CreateUser();
+            cu.ShowDialog();
+        }
     }
 }

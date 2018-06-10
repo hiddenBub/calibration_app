@@ -18,6 +18,7 @@ namespace calibration_app
         public static string SettingPath = RootPath + "\\Setting.xml";
         public static string DataStoragePath = RootPath + "\\DataStorage";
         public static string ReportPath = RootPath + "\\Report";
+        public static string ProgramData = "C:\\ProgramData\\TopFlagTec";
         public static bool IsFirst()
         {
             return !System.IO.File.Exists(SettingPath);

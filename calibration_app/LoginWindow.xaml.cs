@@ -28,10 +28,25 @@ namespace calibration_app
         {
             string uname = this.UserLogin.Text.Trim();
             string password = this.PwdLogin.Password;
+            List<string> accounts = new List<string>();
+            string account = string.Empty;
+            if (System.IO.File.Exists (App.ProgramData + "\\password.txt"))
+            {
+                accounts = System.IO.File.ReadAllLines(App.ProgramData + "\\password.txt").ToList();
+                account = accounts.Find(c => c.StartsWith(uname + " "));
+            }
+            
             if (uname == "topflag" && password == "topflag")
             {
                 this.DialogResult = true;
                 this.Close();
+            }
+            else if (accounts.Count > 0 && !string.IsNullOrEmpty(account))
+            {
+                string[] accountDetail = account.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                if (CreateUser.MD5Encrypt(CreateUser.MD5Encrypt(password) + accountDetail[1]) == accountDetail[2]) this.DialogResult = true;
+                else this.DialogResult = false;
             }
             else
             {

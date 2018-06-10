@@ -30,6 +30,7 @@
                 <!--ToolBar和StatusBar就是一个容器-->
                 <CheckBox Name="GatherCB" Content="开始采集" Click="GatherCB_Click" >
                 </CheckBox>
+                <Button Name="NewUser" Content="创建新用户" Click="NewUser_Click"></Button>
                 <Menu>
                         <!--<MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>-->
                     <MenuItem Header="导入场站数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
