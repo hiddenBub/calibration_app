@@ -105,155 +105,157 @@ namespace calibration_app
             }
             else if (!IsGathering && MainWindow.GatherTimer.Count == 2 && MainWindow.GatherTimer[1] != null)
             {
-                //打开一个文件选择框
-                OpenFileDialog ofd = new OpenFileDialog
+                try
                 {
-                    Title = "Excel文件",
-                    FileName = "",
-                    Filter = "Excel文件(*.xls)|*"
-                };
-                ofd.ShowDialog();
-                // 获取文件路径
-                string filePath = ofd.FileName;
-                // 如果选择文件不为空
-                if (filePath != "" && filePath != null)
-                {
-                    // 配置连接字符串
-                    string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
-                    // 创建新的数据集
-                    DataSet ds = new DataSet();
-                    // 获取数据
-                    OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
-                    // 将数据填充至数据集中
-                    oada.Fill(ds);
-                    // 存储列表
-                    System.Data.DataTable dt = ds.Tables[0];
-                    // 存储表头长度+1即与dat文件存储格式相同
-                    int length = dt.Columns.Count + 1;
-                    //"\"" + string.Join("\",\"", new string[] { Setting.Project.Name, Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString() }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "TIMESTAMP", "RECORD", "GHI_80A", "GHI_80B", "GHI_80C" }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "TS", "RN", "W/m2", "W/m2", "W/m2" }) + "\"",
-                    //"\"" + string.Join("\",\"", new string[] { "", "", "Avg", "Avg", "Avg" }) + "\"",
-                    // 初始化dat文件头
-                    List<string[]> header = new List<string[]>
+                    //打开一个文件选择框
+                    OpenFileDialog ofd = new OpenFileDialog
+                    {
+                        Title = "Excel文件",
+                        FileName = "",
+                        Filter = "Excel文件(*.xls)|*"
+                    };
+                    ofd.ShowDialog();
+                    // 获取文件路径
+                    string filePath = ofd.FileName;
+                    // 如果选择文件不为空
+                    if (filePath != "" && filePath != null)
+                    {
+                        // 配置连接字符串
+                        string strConn = "Provider = Microsoft.ACE.OLEDB.12.0; Data Source = " + filePath + "; Extended Properties = 'Excel 12.0 Xml; HDR = No'";
+                        // 创建新的数据集
+                        DataSet ds = new DataSet();
+                        // 获取数据
+                        OleDbDataAdapter oada = new OleDbDataAdapter("select * from [Sheet1$]", strConn);
+                        // 将数据填充至数据集中
+                        oada.Fill(ds);
+                        // 存储列表
+                        System.Data.DataTable dt = ds.Tables[0];
+                        // 存储表头长度+1即与dat文件存储格式相同
+                        int length = dt.Columns.Count + 1;
+                        //"\"" + string.Join("\",\"", new string[] { Setting.Project.Name, Setting.Project.Lng.ToString(), Setting.Project.Lat.ToString() }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "TIMESTAMP", "RECORD", "GHI_80A", "GHI_80B", "GHI_80C" }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "TS", "RN", "W/m2", "W/m2", "W/m2" }) + "\"",
+                        //"\"" + string.Join("\",\"", new string[] { "", "", "Avg", "Avg", "Avg" }) + "\"",
+                        // 初始化dat文件头
+                        List<string[]> header = new List<string[]>
                     {
                         new string[] { MainWindow.Setting.Project.Name, MainWindow.Setting.Project.Lng.ToString(), MainWindow.Setting.Project.Lat.ToString()},
                         new string[length],
                         new string[length],
                         new string[length],
                     };
-                    // 填充字段之前的数据
-                    header[1][0] = "TIMESTAMP"; header[1][1] = "RECORD";
-                    header[2][0] = "TS"; header[2][1] = "RN";
-                    header[3][0] = ""; header[3][1] = "";
-                    // 填充字段
-                    for (int j = 1; j < dt.Columns.Count; j++)
-                    {
-                        header[1][j + 1] = dt.Columns[j].ToString();
-                        header[2][j + 1] = "W/m2";
-                        header[3][j + 1] = "Avg";
-                    }
-                    // 创建以行为区分的数据列表
-                    List<string> headerNew = new List<string>();
-                    // 循环遍历原列表并将字符串数据存至新列表
-                    for (int k = 0; k < header.Count; k++)
-                    {
-                        headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
-                    }
-                    // 生成校准数据文件名
-                    string fileName = MainWindow.GetFileName(MainWindow.DataStorage,MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-                    // 为该文件添加表头
-                    MainWindow.AddDatHeader(headerNew, fileName);
-
-                    List<String[]> list = new List<string[]>();
-                    // 生成文件写入实例，准备写入文件
-                    StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
-                    for (int dri = 0; dri < dt.Rows.Count; dri++)
-                    {
-
-                        //Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
-                        // 初始化数据(单行)字符串
-                        string str = "\"" + MainWindow.DateFormat(Convert.ToDateTime(dt.Rows[dri][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + dri;
-                        // 填充数据
-                        for (int ii = 1; ii < dt.Columns.Count; ii++)
+                        // 填充字段之前的数据
+                        header[1][0] = "TIMESTAMP"; header[1][1] = "RECORD";
+                        header[2][0] = "TS"; header[2][1] = "RN";
+                        header[3][0] = ""; header[3][1] = "";
+                        // 填充字段
+                        for (int j = 1; j < dt.Columns.Count; j++)
                         {
-                            str += "," + dt.Rows[dri][dt.Columns[ii]];
+                            header[1][j + 1] = dt.Columns[j].ToString();
+                            header[2][j + 1] = "W/m2";
+                            header[3][j + 1] = "Avg";
                         }
-                        // 添加行结束符
-                        //str += Environment.NewLine;
-                        sw.WriteLine(str);
-                    }
-                    sw.Close();
-
-                    string sourceFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-                    string calibrationFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-                    string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
-                    string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
-                    string[] sourceDataBody = GetDatBody(sourceDataList);
-                    string[] calibrationDataBody = GetDatBody(calibrationDataList);
-                    List<List<double>> CombineDataList = new List<List<double>>();
-                    List<List<double>> DataTemp = new List<List<double>>();
-                    ////////////////////////////////////////////////////////////////////////////////////////////
-
-                    // 固定取第二行的数据（此行为列名数据）
-                    string sStr = sourceDataList[1];
-                    string cStr = calibrationDataList[1];
-                    string[] stitle = sStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    string[] ctitle = cStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    string[] data = stitle.Skip(2).Concat(ctitle.Skip(2)).ToArray();
-
-                    int count = data.Length;
-
-                    for (int startIndex = 0; startIndex < count; startIndex++)
-                    {
-                        LineSeries ls = new LineSeries
+                        // 创建以行为区分的数据列表
+                        List<string> headerNew = new List<string>();
+                        // 循环遍历原列表并将字符串数据存至新列表
+                        for (int k = 0; k < header.Count; k++)
                         {
-                            Title = data[startIndex],// 设置集合标题
-                            Values = new ChartValues<double> { },                // 初始化数据集
-                            PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
-                        };
+                            headerNew.Add("\"" + string.Join("\",\"", header[k]) + "\"");
+                        }
+                        // 生成校准数据文件名
+                        string fileName = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                        // 为该文件添加表头
+                        MainWindow.AddDatHeader(headerNew, fileName);
 
-                        if (SeriesCollection.Count > 0)
+                        List<String[]> list = new List<string[]>();
+                        // 生成文件写入实例，准备写入文件
+                        StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
+                        for (int dri = 0; dri < dt.Rows.Count; dri++)
                         {
 
-                            if (SeriesCollection[0].Count > startIndex)
+                            //Console.Write(dt.Rows[i][dt.Columns[0]] + " " + dt.Rows[i][dt.Columns[1]] + " " + dt.Rows[i][dt.Columns[2]] + "\n");
+                            // 初始化数据(单行)字符串
+                            string str = "\"" + MainWindow.DateFormat(Convert.ToDateTime(dt.Rows[dri][dt.Columns[0]]), "yyyy-MM-dd HH:mm:ss") + "\"," + dri;
+                            // 填充数据
+                            for (int ii = 1; ii < dt.Columns.Count; ii++)
                             {
-                                seriesCollection[0][startIndex] = ls;
+                                str += "," + dt.Rows[dri][dt.Columns[ii]];
+                            }
+                            // 添加行结束符
+                            //str += Environment.NewLine;
+                            sw.WriteLine(str);
+                        }
+                        sw.Close();
+
+                        string sourceFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                        string calibrationFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                        string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
+                        string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
+                        string[] sourceDataBody = GetDatBody(sourceDataList);
+                        string[] calibrationDataBody = GetDatBody(calibrationDataList);
+                        List<List<double>> CombineDataList = new List<List<double>>();
+                        List<List<double>> DataTemp = new List<List<double>>();
+                        ////////////////////////////////////////////////////////////////////////////////////////////
+
+                        // 固定取第二行的数据（此行为列名数据）
+                        string sStr = sourceDataList[1];
+                        string cStr = calibrationDataList[1];
+                        string[] stitle = sStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] ctitle = cStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] data = stitle.Skip(2).Concat(ctitle.Skip(2)).ToArray();
+
+                        int count = data.Length;
+
+                        for (int startIndex = 0; startIndex < count; startIndex++)
+                        {
+                            LineSeries ls = new LineSeries
+                            {
+                                Title = data[startIndex],// 设置集合标题
+                                Values = new ChartValues<double> { },                // 初始化数据集
+                                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                            };
+
+                            if (SeriesCollection.Count > 0)
+                            {
+
+                                if (SeriesCollection[0].Count > startIndex)
+                                {
+                                    seriesCollection[0][startIndex] = ls;
+                                }
+                                else
+                                {
+                                    SeriesCollection[0].Add(ls);
+                                }
+
                             }
                             else
                             {
-                                SeriesCollection[0].Add(ls);
+                                seriesCollection.Add(new LiveCharts.SeriesCollection { });
+                                if (SeriesCollection[0].Count > startIndex)
+                                {
+                                    seriesCollection[0][startIndex] = ls;
+                                }
+                                else
+                                {
+                                    SeriesCollection[0].Add(ls);
+                                }
                             }
-
                         }
-                        else
+                        Labels = MainWindow.AddItem<List<string>>(Labels, new List<string> { });
+                        // Y轴的轴标签显示结构
+                        YFormatter = MainWindow.AddItem<Func<double, string>>(YFormatter, value => value.ToString("N"));
+                        CartesianChart cartesian = new CartesianChart
                         {
-                            seriesCollection.Add(new LiveCharts.SeriesCollection { });
-                            if (SeriesCollection[0].Count > startIndex)
-                            {
-                                seriesCollection[0][startIndex] = ls;
-                            }
-                            else
-                            {
-                                SeriesCollection[0].Add(ls);
-                            }
-                        }
-                    }
-                    Labels = MainWindow.AddItem<List<string>>(Labels, new List<string> { });
-                    // Y轴的轴标签显示结构
-                    YFormatter = MainWindow.AddItem<Func<double, string>>(YFormatter, value => value.ToString("N"));
-                    CartesianChart cartesian = new CartesianChart
-                    {
-                        Series = SeriesCollection[0],
-                        LegendLocation = LegendLocation.Right,
-                        AxisY = new AxesCollection
+                            Series = SeriesCollection[0],
+                            LegendLocation = LegendLocation.Right,
+                            AxisY = new AxesCollection
                 {
                     new LiveCharts.Wpf.Axis{
                         Title = "辐射强度,单位W/m²",
                         LabelFormatter = YFormatter[0],
                     }
                 },
-                        AxisX = new AxesCollection
+                            AxisX = new AxesCollection
                 {
                     new LiveCharts.Wpf.Axis
                     {
@@ -261,124 +263,130 @@ namespace calibration_app
                         Labels = Labels[0]
                     }
                 },
-                        DisableAnimations = true,
-                        DataTooltip = null
-                    };
-                    CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian);
+                            DisableAnimations = true,
+                            DataTooltip = null
+                        };
+                        CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian);
 
 
 
-                    // 将图表实例添加至ChartZone这个grid中去
-                    ChartZone.Children.Add(cartesianChart[0]);
-                    // 设定图表合并行参数
-                    CartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
+                        // 将图表实例添加至ChartZone这个grid中去
+                        ChartZone.Children.Add(cartesianChart[0]);
+                        // 设定图表合并行参数
+                        CartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
 
 
-                    //////////////////////////////////////////////////////////////////////////////////////////
-                    int i = 0;
-                    int cdlIndex = 0;
-                    // 数据收缩级别，生产环境需要置1
-                    int shrink = 3;
-                    // 遍历校准数据
-                    for (int ii = 0; ii < sourceDataBody.Length; ii++)
-                    {
-                        bool correct = true;
-                        char[] separator = new char[] { ',', '"' };
-                        string[] datas = sourceDataBody[ii].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                        string[] cDatas = calibrationDataBody[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                        DateTime sTime = Convert.ToDateTime(datas[0]);
-                        DateTime cTime = Convert.ToDateTime(cDatas[0]);
-                        // 当源数据时间戳小于等于校准数据时
-                        if (DateTime.Compare(sTime, cTime) <= 0)
+                        //////////////////////////////////////////////////////////////////////////////////////////
+                        int i = 0;
+                        int cdlIndex = 0;
+                        // 数据收缩级别，生产环境需要置1
+                        int shrink = 3;
+                        // 遍历校准数据
+                        for (int ii = 0; ii < sourceDataBody.Length; ii++)
                         {
-
-                            for (int di = 2; di < datas.Length; di++)
+                            bool correct = true;
+                            char[] separator = new char[] { ',', '"' };
+                            string[] datas = sourceDataBody[ii].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                            string[] cDatas = calibrationDataBody[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                            DateTime sTime = Convert.ToDateTime(datas[0]);
+                            DateTime cTime = Convert.ToDateTime(cDatas[0]);
+                            // 当源数据时间戳小于等于校准数据时
+                            if (DateTime.Compare(sTime, cTime) <= 0)
                             {
-                                int scIndex = di - 2;
-                                // 尝试转化字符串数据为decimal数据
-                                if (!double.TryParse(datas[di], out double x))
+
+                                for (int di = 2; di < datas.Length; di++)
                                 {
-                                    // 如果同行数据插入成功但后续数据无效则删除该行数据，保证数据列数一致性
-                                    if (DataTemp.Count > scIndex) DataTemp.RemoveAt(scIndex);
-                                    // 准备跳出该次大循环
-                                    correct = false;
-                                    // 跳出循环
-                                    break;
-                                }
-
-                                // 将取得的数据存入dataTemp
-                                DataTemp = MainWindow.AddSonItem<double>(DataTemp, Math.Round(x / shrink, 3), scIndex);
-
-                            }
-                            // 数据有误则跳过该次循环
-                            if (!correct) continue;
-
-
-                            // 当两个相等时获取
-                            if (DateTime.Compare(sTime, cTime) == 0)
-                            {
-                                // 将新的坐标轴时间加入Labels数组
-
-                                Labels[0].Add(cDatas[0]);
-
-                                for (int index = cDatas.Length - 1; index >= 2; index--)
-                                {
-                                    if (!double.TryParse(cDatas[index], out double x))
+                                    int scIndex = di - 2;
+                                    // 尝试转化字符串数据为decimal数据
+                                    if (!double.TryParse(datas[di], out double x))
                                     {
-                                        Labels.RemoveAt(Labels.Count - 1);
-                                        i++;
-                                        DataTemp.Clear();
+                                        // 如果同行数据插入成功但后续数据无效则删除该行数据，保证数据列数一致性
+                                        if (DataTemp.Count > scIndex) DataTemp.RemoveAt(scIndex);
+                                        // 准备跳出该次大循环
                                         correct = false;
+                                        // 跳出循环
                                         break;
                                     }
 
                                     // 将取得的数据存入dataTemp
-                                    CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, Math.Round(x / shrink, 3), cdlIndex);
+                                    DataTemp = MainWindow.AddSonItem<double>(DataTemp, Math.Round(x / shrink, 3), scIndex);
+
                                 }
+                                // 数据有误则跳过该次循环
                                 if (!correct) continue;
-                                for (int dli = DataTemp.Count - 1; dli >= 0; dli--)
+
+
+                                // 当两个相等时获取
+                                if (DateTime.Compare(sTime, cTime) == 0)
                                 {
-                                    // 使用均值方法获取均值
-                                    double avg = (double)MainWindow.GetAvg(DataTemp[dli]);
+                                    // 将新的坐标轴时间加入Labels数组
 
-                                    // 添加当前的点进入数组
-                                    CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, avg, cdlIndex);
+                                    Labels[0].Add(cDatas[0]);
+
+                                    for (int index = cDatas.Length - 1; index >= 2; index--)
+                                    {
+                                        if (!double.TryParse(cDatas[index], out double x))
+                                        {
+                                            Labels.RemoveAt(Labels.Count - 1);
+                                            i++;
+                                            DataTemp.Clear();
+                                            correct = false;
+                                            break;
+                                        }
+
+                                        // 将取得的数据存入dataTemp
+                                        CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, Math.Round(x / shrink, 3), cdlIndex);
+                                    }
+                                    if (!correct) continue;
+                                    for (int dli = DataTemp.Count - 1; dli >= 0; dli--)
+                                    {
+                                        // 使用均值方法获取均值
+                                        double avg = (double)MainWindow.GetAvg(DataTemp[dli]);
+
+                                        // 添加当前的点进入数组
+                                        CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, avg, cdlIndex);
+                                    }
+                                    CombineDataList[CombineDataList.Count - 1].Reverse();
+                                    cdlIndex++;
+                                    i++;
+                                    // 清理数据缓存，准备下次数据接入
+                                    DataTemp.Clear();
                                 }
-                                CombineDataList[CombineDataList.Count - 1].Reverse();
-                                cdlIndex++;
-                                i++;
-                                // 清理数据缓存，准备下次数据接入
-                                DataTemp.Clear();
-                            }
 
-                        }
-                        // 当源数据时间戳大于校准数据时
-                        else
-                        {
-                            for (int cIndex = i; i < cDatas.Length; cIndex++)
+                            }
+                            // 当源数据时间戳大于校准数据时
+                            else
                             {
-                                string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                                if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
+                                for (int cIndex = i; i < cDatas.Length; cIndex++)
                                 {
-                                    i = cIndex;
-                                    break;
+                                    string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                                    if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
+                                    {
+                                        i = cIndex;
+                                        break;
+                                    }
+
+
                                 }
-
-
                             }
-                        }
 
-                    }
-                    // 将数据写入数组中
-                    for (int si = 0; si < CombineDataList.Count; si++)
-                    {
-                        for (int sik = 0; sik < CombineDataList[si].Count; sik++)
+                        }
+                        // 将数据写入数组中
+                        for (int si = 0; si < CombineDataList.Count; si++)
                         {
-                            SeriesCollection[0][sik].Values.Add(CombineDataList[si][sik]);
-                        }
+                            for (int sik = 0; sik < CombineDataList[si].Count; sik++)
+                            {
+                                SeriesCollection[0][sik].Values.Add(CombineDataList[si][sik]);
+                            }
 
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "提示");
+                }
+                
 
             }
         }
@@ -882,6 +890,7 @@ namespace calibration_app
                     List<TagInfo> tagInfos = wordMLHelper.GetAllTagInfo(File.OpenRead(templatePath));
                     for (int i = 0; i < tagInfos.Count; i++)
                     {
+                        int table = 1;
                         //填充域有两种类型,1:段落或图片,2:表格
                         //对填充域填充时需先判断填充域类型
                         if (tagInfos[i].Tbl == null)
@@ -958,6 +967,7 @@ namespace calibration_app
                         else
                         {
                             TableStructureInfo tblInfo = tagInfos[i].Tbl;
+                            
                             if (tagInfos[i].Seq >= 2)
                             {
                                 for (int j = 0; j < ColumnList.Count; j++)
@@ -991,46 +1001,69 @@ namespace calibration_app
                                                 
                                                 break;
                                             case 2:
-                                                txtInfo.Add(new TxtInfo {
-                                                    Content = ColumnList[j].OldSensitivity.ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
-                                                txtInfo.Add(new TxtInfo {
-                                                    Content = ColumnList[j].NewSensitivity.ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
+                                                if (table == 1)
+                                                {
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = ColumnList[j].OldSensitivity.ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
+                                                else
+                                                {
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = ColumnList[j].NewSensitivity.ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
+                                                
+                                                
                                                 break;
                                             case 3:
-                                                txtInfo.Add(new TxtInfo
+                                                if (table == 1)
                                                 {
-                                                    Content = (ColumnList[j].OldAverageDeviation * 100).ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
-                                                txtInfo.Add(new TxtInfo
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = (ColumnList[j].OldAverageDeviation * 100).ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
+                                                else
                                                 {
-                                                    Content = (ColumnList[j].NewAverageDeviation * 100).ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = (ColumnList[j].NewAverageDeviation * 100).ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
+                                                
+                                                
                                                 break;
                                             case 4:
-                                                txtInfo.Add(new TxtInfo
+                                                if (table == 1)
                                                 {
-                                                    Content = (ColumnList[j].OldAverageAbsoluteDeviation * 100).ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
-                                                txtInfo.Add(new TxtInfo
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = (ColumnList[j].OldAverageAbsoluteDeviation * 100).ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
+                                                else
                                                 {
-                                                    Content = (ColumnList[j].NewAverageAbsoluteDeviation * 100).ToString(),
-                                                    Size = 25,
-                                                    ForeColor = "0070C0",
-                                                });
+                                                    txtInfo.Add(new TxtInfo
+                                                    {
+                                                        Content = (ColumnList[j].NewAverageAbsoluteDeviation * 100).ToString(),
+                                                        Size = 25,
+                                                        ForeColor = "0070C0",
+                                                    });
+                                                }
                                                 break;
-                                            
                                         }
                                         if (txtInfo.Count == 1)
                                         {
@@ -1049,7 +1082,7 @@ namespace calibration_app
                                             
                                             
                                         }
-                                        
+                                        table++;
                                         
                                     }
                                     tblInfo.AddRow(row);

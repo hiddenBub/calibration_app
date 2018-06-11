@@ -19,6 +19,7 @@ namespace calibration_app
         public static string DataStoragePath = RootPath + "\\DataStorage";
         public static string ReportPath = RootPath + "\\Report";
         public static string ProgramData = "C:\\ProgramData\\TopFlagTec";
+        public static string AvailableUser = string.Empty;
         public static bool IsFirst()
         {
             return !System.IO.File.Exists(SettingPath);
@@ -52,7 +53,7 @@ namespace calibration_app
                 } 
                 else
                 {
-                    
+                    Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 }
                
             }

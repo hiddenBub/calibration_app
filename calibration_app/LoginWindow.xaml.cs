@@ -38,14 +38,19 @@ namespace calibration_app
             
             if (uname == "topflag" && password == "topflag")
             {
+                App.AvailableUser = "topflag";
                 this.DialogResult = true;
                 this.Close();
             }
             else if (accounts.Count > 0 && !string.IsNullOrEmpty(account))
             {
                 string[] accountDetail = account.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                
-                if (CreateUser.MD5Encrypt(CreateUser.MD5Encrypt(password) + accountDetail[1]) == accountDetail[2]) this.DialogResult = true;
+
+                if (CreateUser.MD5Encrypt(CreateUser.MD5Encrypt(password) + accountDetail[1]) == accountDetail[2])
+                {
+                    App.AvailableUser = accountDetail[0];
+                    this.DialogResult = true;
+                }
                 else this.DialogResult = false;
             }
             else

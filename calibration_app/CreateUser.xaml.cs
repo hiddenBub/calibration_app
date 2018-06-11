@@ -35,7 +35,7 @@ namespace calibration_app
 
         private void Confirm_Click(object sender, RoutedEventArgs e)
         {
-            if (Directory.Exists(App.ProgramData))
+            if (!Directory.Exists(App.ProgramData))
                 Directory.CreateDirectory(App.ProgramData);
 
             if (String.IsNullOrEmpty(UserNameTB.Text.Trim()))

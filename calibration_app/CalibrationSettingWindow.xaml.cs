@@ -33,52 +33,60 @@ namespace calibration_app
 
         public CalibrationSettingWindow()
         {
-            InitializeComponent();
-            Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
-            
-            string fileSource = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            string fileCalibration = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
-            StreamReader srSource = new StreamReader(fileSource, false);
-            StreamReader srCalibration = new StreamReader(fileCalibration, false);
-            int length = 2;
-            string[] linesS = new string[length];
-            string[] linesC = new string[length];
-            for (int i = 0; i < length; i++)
+            try
             {
-                linesS[i] = srSource.ReadLine();
-                linesC[i] = srCalibration.ReadLine();
-            }
-            srCalibration.Close();
-            srSource.Close();
-            List<string> ColS = new List<string>(linesS[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
-            List<string> ColC = new List<string>(linesC[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
-            if (Setting.Gather.ColumnList.Count == ColC.Count - 2)
-            {
-                ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
-            }
-            else
-            {
-                for (int i = 2; i < ColC.Count; i++)
+                InitializeComponent();
+                Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
+
+                string fileSource = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                string fileCalibration = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                StreamReader srSource = new StreamReader(fileSource, false);
+                StreamReader srCalibration = new StreamReader(fileCalibration, false);
+                int length = 2;
+                string[] linesS = new string[length];
+                string[] linesC = new string[length];
+                for (int i = 0; i < length; i++)
                 {
-                    ColumnList.Add(new Column( i-2,ColC[i]));
+                    linesS[i] = srSource.ReadLine();
+                    linesC[i] = srCalibration.ReadLine();
                 }
-            }
-            List<string> labs = new List<string>
+                srCalibration.Close();
+                srSource.Close();
+                List<string> ColS = new List<string>(linesS[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
+                List<string> ColC = new List<string>(linesC[1].Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries));
+                if (Setting.Gather.ColumnList.Count == ColC.Count - 2)
+                {
+                    ColumnList = new ObservableCollection<Column>(Setting.Gather.ColumnList);
+                }
+                else
+                {
+                    for (int i = 2; i < ColC.Count; i++)
+                    {
+                        ColumnList.Add(new Column(i - 2, ColC[i]));
+                    }
+                }
+                List<string> labs = new List<string>
             {
                 "辐射①",
                 "辐射②",
                 "辐射③",
             };
-            if (SourceCol.Count == 0)
-            {
-                for (int i = 2; i < ColS.Count; i++)
+                if (SourceCol.Count == 0)
                 {
-                    sourceCol.Add(labs[i - 2]);
+                    for (int i = 2; i < ColS.Count; i++)
+                    {
+                        sourceCol.Add(labs[i - 2]);
+                    }
                 }
+
+
+                GridGather.ItemsSource = ColumnList;
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message, "提示");
             }
             
-            
-            GridGather.ItemsSource = ColumnList;
         }
 
         /// <summary>     
