@@ -847,13 +847,7 @@ namespace calibration_app
             CalibrationCollection.Reverse();
             double minX = 9999;double minY = 9999; double maxX = 0; double maxY = 0;
 
-            //LineSeries ls = new LineSeries
-            //{
-            //    Title = "基准线",
-            //    Values = new ChartValues<double>(),
-            //    PointGeometry = DefaultGeometries.Triangle,             // 取消点的图形标注
-
-            //};
+           
             SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection> (SeriesCollection, new LiveCharts.SeriesCollection { }, 1);
             
             List<string> errorMessage = new List<string>();
@@ -930,7 +924,17 @@ namespace calibration_app
                 MessageBox.Show("场站数据" + string.Join("、",errorMessage.ToArray()) + "无法校准，请重新采集", "警告");
                 return;
             }
-
+            LineSeries ls = new LineSeries
+            {
+                Title = "基准线",
+                Values = new ChartValues<ObservablePoint> {
+                    new ObservablePoint(minX, minY),
+                    new ObservablePoint(maxX, maxY),
+                },
+                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                StrokeThickness = 1,
+            };
+            SeriesCollection[1].Add(ls);
             //ls.Values.Add(minY);
             //ls.Values.Add(maxY);
 
