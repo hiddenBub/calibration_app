@@ -25,6 +25,7 @@ using WordMLHelperUtil.Entity;
 using WordMLHelperUtil;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 
 namespace calibration_app
 {
@@ -33,7 +34,7 @@ namespace calibration_app
     /// </summary>
     public partial class CalibrationWindow : System.Windows.Window
     {
-        public List<Geometry> Point = new List<Geometry>
+        public List<Geometry> ChartPoint = new List<Geometry>
         {
             DefaultGeometries.None,
             DefaultGeometries.Circle,
@@ -169,7 +170,7 @@ namespace calibration_app
 
                         List<String[]> list = new List<string[]>();
                         // 生成文件写入实例，准备写入文件
-                        StreamWriter sw = new StreamWriter(new FileStream(fileName, FileMode.Append));
+                        StreamWriter sw = new StreamWriter(fileName, true,Encoding.UTF8);
                         for (int dri = 0; dri < dt.Rows.Count; dri++)
                         {
 
@@ -280,7 +281,7 @@ namespace calibration_app
                         int i = 0;
                         int cdlIndex = 0;
                         // 数据收缩级别，生产环境需要置1
-                        int shrink = 3;
+                        int shrink = 1;
                         // 遍历校准数据
                         for (int ii = 0; ii < sourceDataBody.Length; ii++)
                         {
@@ -290,6 +291,21 @@ namespace calibration_app
                             string[] cDatas = calibrationDataBody[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
                             DateTime sTime = Convert.ToDateTime(datas[0]);
                             DateTime cTime = Convert.ToDateTime(cDatas[0]);
+                            if (DateTime.Compare(sTime, cTime) > 0)
+                            {
+                                for (int cIndex = i; cIndex < calibrationDataBody.Length; cIndex++)
+                                {
+                                    string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                                    if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
+                                    {
+                                        cTime = Convert.ToDateTime(line[0]);
+                                        cDatas = line;
+                                        i = cIndex;
+                                        break;
+                                    }
+
+                                }
+                            }
                             // 当源数据时间戳小于等于校准数据时
                             if (DateTime.Compare(sTime, cTime) <= 0)
                             {
@@ -349,25 +365,11 @@ namespace calibration_app
                                     CombineDataList[CombineDataList.Count - 1].Reverse();
                                     cdlIndex++;
                                     i++;
+                                    if (i >= calibrationDataBody.Length) break;
                                     // 清理数据缓存，准备下次数据接入
                                     DataTemp.Clear();
                                 }
 
-                            }
-                            // 当源数据时间戳大于校准数据时
-                            else
-                            {
-                                for (int cIndex = i; i < cDatas.Length; cIndex++)
-                                {
-                                    string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                                    if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
-                                    {
-                                        i = cIndex;
-                                        break;
-                                    }
-
-
-                                }
                             }
 
                         }
@@ -396,6 +398,207 @@ namespace calibration_app
         {
             CalibrationSettingWindow csw = new CalibrationSettingWindow();
             csw.ShowDialog();
+            if (csw.DialogResult == true )
+            {
+                ChartZone.Children.Clear();
+                string sourceFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                string calibrationFile = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                string[] sourceDataList = File.ReadAllLines(sourceFile, Encoding.UTF8);
+                string[] calibrationDataList = File.ReadAllLines(calibrationFile, Encoding.UTF8);
+                string[] sourceDataBody = GetDatBody(sourceDataList);
+                string[] calibrationDataBody = GetDatBody(calibrationDataList);
+                List<List<double>> CombineDataList = new List<List<double>>();
+                List<List<double>> DataTemp = new List<List<double>>();
+                ////////////////////////////////////////////////////////////////////////////////////////////
+
+                // 固定取第二行的数据（此行为列名数据）
+                string sStr = sourceDataList[1];
+                string cStr = calibrationDataList[1];
+                string[] stitle = sStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] ctitle = cStr.Split(new char[] { '"', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] data = stitle.Skip(2).Concat(ctitle.Skip(2)).ToArray();
+
+                int count = data.Length;
+
+
+                for (int startIndex = 0; startIndex < count; startIndex++)
+                {
+                    LineSeries ls = new LineSeries
+                    {
+                        Title = data[startIndex],// 设置集合标题
+                        Values = new ChartValues<double> { },                // 初始化数据集
+                        PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                    };
+
+                    if (SeriesCollection.Count > 0)
+                    {
+
+                        if (SeriesCollection[0].Count > startIndex)
+                        {
+                            seriesCollection[0][startIndex] = ls;
+                        }
+                        else
+                        {
+                            SeriesCollection[0].Add(ls);
+                        }
+
+                    }
+                    else
+                    {
+                        seriesCollection.Add(new LiveCharts.SeriesCollection { });
+                        if (SeriesCollection[0].Count > startIndex)
+                        {
+                            seriesCollection[0][startIndex] = ls;
+                        }
+                        else
+                        {
+                            SeriesCollection[0].Add(ls);
+                        }
+                    }
+                }
+                Labels = MainWindow.AddItem<List<string>>(Labels, new List<string> { });
+                // Y轴的轴标签显示结构
+                YFormatter = MainWindow.AddItem<Func<double, string>>(YFormatter, value => value.ToString("N"));
+                CartesianChart cartesian = new CartesianChart
+                {
+                    Series = SeriesCollection[0],
+                    LegendLocation = LegendLocation.Right,
+                    AxisY = new AxesCollection
+                {
+                    new LiveCharts.Wpf.Axis{
+                        Title = "辐射强度,单位W/m²",
+                        LabelFormatter = YFormatter[0],
+                    }
+                },
+                    AxisX = new AxesCollection
+                {
+                    new LiveCharts.Wpf.Axis
+                    {
+                        Title = "时间",
+                        Labels = Labels[0]
+                    }
+                },
+                    DisableAnimations = true,
+                    Hoverable = false,
+                    //DataTooltip = null,
+                };
+                CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian);
+
+
+
+                // 将图表实例添加至ChartZone这个grid中去
+                ChartZone.Children.Add(cartesianChart[0]);
+                // 设定图表合并行参数
+                CartesianChart[0].SetValue(Grid.RowSpanProperty, 2);
+
+
+                //////////////////////////////////////////////////////////////////////////////////////////
+                int i = 0;
+                int cdlIndex = 0;
+                // 数据收缩级别，生产环境需要置1
+                int shrink = 1;
+                // 遍历校准数据
+                for (int ii = 0; ii < sourceDataBody.Length; ii++)
+                {
+                    bool correct = true;
+                    char[] separator = new char[] { ',', '"' };
+                    string[] datas = sourceDataBody[ii].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                    string[] cDatas = calibrationDataBody[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                    DateTime sTime = Convert.ToDateTime(datas[0]);
+                    DateTime cTime = Convert.ToDateTime(cDatas[0]);
+                    if (DateTime.Compare(sTime, cTime) > 0)
+                    {
+                        for (int cIndex = i; cIndex < calibrationDataBody.Length; cIndex++)
+                        {
+                            string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                            if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
+                            {
+                                cTime = Convert.ToDateTime(line[0]);
+                                cDatas = line;
+                                i = cIndex;
+                                break;
+                            }
+
+                        }
+                    }
+                    // 当源数据时间戳小于等于校准数据时
+                    if (DateTime.Compare(sTime, cTime) <= 0)
+                    {
+
+                        for (int di = 2; di < datas.Length; di++)
+                        {
+                            int scIndex = di - 2;
+                            // 尝试转化字符串数据为decimal数据
+                            if (!double.TryParse(datas[di], out double x))
+                            {
+                                // 如果同行数据插入成功但后续数据无效则删除该行数据，保证数据列数一致性
+                                if (DataTemp.Count > scIndex) DataTemp.RemoveAt(scIndex);
+                                // 准备跳出该次大循环
+                                correct = false;
+                                // 跳出循环
+                                break;
+                            }
+
+                            // 将取得的数据存入dataTemp
+                            DataTemp = MainWindow.AddSonItem<double>(DataTemp, Math.Round(x / shrink, 3), scIndex);
+
+                        }
+                        // 数据有误则跳过该次循环
+                        if (!correct) continue;
+
+
+                        // 当两个相等时获取
+                        if (DateTime.Compare(sTime, cTime) == 0)
+                        {
+                            // 将新的坐标轴时间加入Labels数组
+
+                            Labels[0].Add(cDatas[0]);
+
+                            for (int index = cDatas.Length - 1; index >= 2; index--)
+                            {
+                                if (!double.TryParse(cDatas[index], out double x))
+                                {
+                                    Labels.RemoveAt(Labels.Count - 1);
+                                    i++;
+                                    DataTemp.Clear();
+                                    correct = false;
+                                    break;
+                                }
+
+                                // 将取得的数据存入dataTemp
+                                CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, Math.Round(x / shrink, 3), cdlIndex);
+                            }
+                            if (!correct) continue;
+                            for (int dli = DataTemp.Count - 1; dli >= 0; dli--)
+                            {
+                                // 使用均值方法获取均值
+                                double avg = (double)MainWindow.GetAvg(DataTemp[dli]);
+
+                                // 添加当前的点进入数组
+                                CombineDataList = MainWindow.AddSonItem<double>(CombineDataList, avg, cdlIndex);
+                            }
+                            CombineDataList[CombineDataList.Count - 1].Reverse();
+                            cdlIndex++;
+                            i++;
+                            if (i >= calibrationDataBody.Length) break;
+                            // 清理数据缓存，准备下次数据接入
+                            DataTemp.Clear();
+                        }
+
+                    }
+
+
+                }
+                // 将数据写入数组中
+                for (int si = 0; si < CombineDataList.Count; si++)
+                {
+                    for (int sik = 0; sik < CombineDataList[si].Count; sik++)
+                    {
+                        SeriesCollection[0][sik].Values.Add(CombineDataList[si][sik]);
+                    }
+
+                }
+            }
         }
 
        
@@ -510,6 +713,21 @@ namespace calibration_app
                 string[] cDatas = calibrationDataBody[i].Split(separator, StringSplitOptions.RemoveEmptyEntries);
                 DateTime sTime = Convert.ToDateTime(datas[0]);
                 DateTime cTime = Convert.ToDateTime(cDatas[0]);
+                if (DateTime.Compare(sTime, cTime) > 0)
+                {
+                    for (int cIndex = i; cIndex < calibrationDataBody.Length; cIndex++)
+                    {
+                        string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                        if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
+                        {
+                            cTime = Convert.ToDateTime(line[0]);
+                            cDatas = line;
+                            i = cIndex;
+                            break;
+                        }
+                        
+                    }
+                }
                 // 当源数据时间戳小于等于校准数据时
                 if (DateTime.Compare(sTime, cTime )<=0){
 
@@ -568,26 +786,13 @@ namespace calibration_app
                         CombineDataList[CombineDataList.Count - 1].Reverse();
                         cdlIndex++;
                         i++;
+                        if (i >= calibrationDataBody.Length) break;
                         // 清理数据缓存，准备下次数据接入
                         DataTemp.Clear();
                     }
                     
                 }
-                // 当源数据时间戳大于校准数据时
-                else
-                {
-                    for (int cIndex = i;i<cDatas.Length;cIndex++)
-                    {
-                        string[] line = calibrationDataBody[cIndex].Split(separator, StringSplitOptions.RemoveEmptyEntries);
-                        if (DateTime.Compare(sTime, Convert.ToDateTime(line[0])) <= 0)
-                        {
-                            i = cIndex;
-                            break;
-                        }
-                        
-                        
-                    }
-                }
+                
                 
             }
             // 将数据写入数组中
@@ -602,12 +807,12 @@ namespace calibration_app
 
         }
 
-        public string[] GetDatHeader(string[] dataList)
+        public static string[] GetDatHeader(string[] dataList)
         {
             return dataList.Take(4).ToArray();
         }
 
-        public string[] GetDatBody(string[] dataList)
+        public static string[] GetDatBody(string[] dataList)
         {
             return dataList.Skip(4).ToArray();
         }
@@ -616,7 +821,16 @@ namespace calibration_app
         {
             if (CartesianChart.Count> 1)
             {
-                return;
+                if (ChartZone.Children.Count > 1)
+                {
+                    ChartZone.Children.RemoveAt(1);
+                }
+                
+                if (ChartZone.Children.Count > 2)
+                {
+                    ChartZone.Children.RemoveAt(2);
+                }
+                
             }
             
             // 取得校准数据列的数量
@@ -638,9 +852,10 @@ namespace calibration_app
             //    Title = "基准线",
             //    Values = new ChartValues<double>(),
             //    PointGeometry = DefaultGeometries.Triangle,             // 取消点的图形标注
-               
+
             //};
-            SeriesCollection.Add(new LiveCharts.SeriesCollection { });
+            SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection> (SeriesCollection, new LiveCharts.SeriesCollection { }, 1);
+            
             List<string> errorMessage = new List<string>();
             // 遍历数据
             for (int i = 0;i < CalibrationCollection.Count;i++ )
@@ -663,7 +878,7 @@ namespace calibration_app
                 {
                     Title = CalibrationCollection[i].Title + "-" + lineSeries.Title,    // 设置集合标题
                     Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
-                    PointGeometry = Point[i+1],             // 取消点的图形标注
+                    PointGeometry = ChartPoint[i+1],             // 取消点的图形标注
                 };
                 int N1 = 0;
                 // 清理点数据
@@ -672,7 +887,8 @@ namespace calibration_app
                     double dataX = Convert.ToDouble(lineSeries.Values[index]);
                     double dataY = Convert.ToDouble(CalibrationCollection[i].Values[index]);
                     double deviation = Math.Abs(dataX - dataY) / dataX;
-                    if (dataX > 200 && dataX < 1500)
+                    // 如果
+                    if (dataX < 1500)
                     {
                         N1++;
                         if (deviation < 0.2)
@@ -688,14 +904,16 @@ namespace calibration_app
                             maxY = Math.Max(maxY, dataY);
                         }
                     }
-                    else if (deviation > 0.2 || dataX > 1500 || dataX < 200) continue;
+                    else if (deviation > 0.2 || dataX > 1500 ) continue;
                     
                 }
-                if (N1 == 0 || ss.Values.Count / N1 < 0.5)
+                
+                if (N1 == 0 || ss.Values.Count < 0.5 * N1)
                 {
                     errorMessage.Add(MainWindow.Setting.Gather.ColumnList[i].Name);
                     continue;
                 }
+
                 if (SeriesCollection[1].Count > i)
                 {
                     seriesCollection[1][i] = ss;
@@ -756,16 +974,15 @@ namespace calibration_app
 
         private void CalibrateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (SeriesCollection.Count > 1)
+            if (ChartZone.Children.Count > 1)
             {
-                if (CartesianChart.Count > 2)
-                {
-                    return;
-                }
+                if (ChartZone.Children.Count > 2) ChartZone.Children.RemoveAt(2);
                 ObservableCollection<SetOption.Column> columnList = MainWindow.Setting.Gather.ColumnList;
                 LiveCharts.SeriesCollection calibrated = SeriesCollection[1];
+                ColumnList.Clear();
                 int index = 0;
-                SeriesCollection.Add(new LiveCharts.SeriesCollection());
+                SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection>(SeriesCollection, new LiveCharts.SeriesCollection(), 2);
+                
                 foreach (ScatterSeries scatter in calibrated)
                 {
                     // 偏差和
@@ -778,7 +995,7 @@ namespace calibration_app
                     {
                         Title = scatter.Title,    // 设置集合标题
                         Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
-                        PointGeometry = Point[index + 1],             // 取消点的图形标注
+                        PointGeometry = ChartPoint[index + 1],             // 取消点的图形标注
                     };
                     // 遍历数组求得数据和
                     for (int i = 0; i < scatter.Values.Count; i++)
@@ -794,7 +1011,7 @@ namespace calibration_app
 
                         sum += (STTv - STDv) / STDv;
                         absSum += Math.Abs(STTv - STDv) / STDv;
-                        senSum += oldSen * STTv / STDv;
+                        senSum += oldSen * STDv / STTv;
                     }
                     ColumnList.Add(new ColumnSetting {
                         Name = columnList[index].Name,
@@ -856,8 +1073,9 @@ namespace calibration_app
                         MaxValue = maxX,
                     }
                 },
+                    Hoverable = false,
                     DisableAnimations = true,
-                    DataTooltip = null
+                    //DataTooltip = null
                 };
                 this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian, 2);
 
@@ -888,9 +1106,10 @@ namespace calibration_app
                     string templatePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, MubanFile);
                     WordMLHelper wordMLHelper = new WordMLHelper();
                     List<TagInfo> tagInfos = wordMLHelper.GetAllTagInfo(File.OpenRead(templatePath));
+                    int table = 1;
                     for (int i = 0; i < tagInfos.Count; i++)
                     {
-                        int table = 1;
+                        
                         //填充域有两种类型,1:段落或图片,2:表格
                         //对填充域填充时需先判断填充域类型
                         if (tagInfos[i].Tbl == null)
@@ -950,18 +1169,21 @@ namespace calibration_app
                             }
                             else if (string.Equals(tagInfos[i].TagTips.Trim(), "{snapshoot}"))
                             {
-                                //Bitmap bit = new Bitmap(this.Width, this.Height);//实例化一个和窗体一样大的bitmap
-                                //Graphics g = Graphics.FromImage(bit);
-                                //g.CompositingQuality = CompositingQuality.HighQuality;//质量设为最高
-                                //g.CopyFromScreen(this.Left, this.Top, 0, 0, new Size(this.Width, this.Height));//保存整个窗体为图片
-                                //g.CopyFromScreen(panel游戏区.PointToScreen(Point.Empty), Point.Empty, panel游戏区.Size);//只保存某个控件（这里是panel游戏区）
-                                //bit.Save("weiboTemp.png");//默认保存格式为PNG，保存成jpg格式质量不是很好
+                                
+                                Bitmap bit = new Bitmap(Convert.ToInt32(this.Width), Convert.ToInt32(this.Height));//实例化一个和窗体一样大的bitmap
+                                Graphics g = Graphics.FromImage(bit);
+                                g.CompositingQuality = CompositingQuality.HighQuality;//质量设为最高
+                                g.CopyFromScreen(Convert.ToInt32(this.Left), Convert.ToInt32(this.Top), 0, 0, new System.Drawing.Size(Convert.ToInt32(this.Width), Convert.ToInt32(this.Height)));//保存整个窗体为图片
+                                //g.CopyFromScreen(panel游戏区 .PointToScreen(Point.Empty), Point.Empty, panel游戏区.Size);//只保存某个控件（这里是panel游戏区）
+                                string file = MainWindow.GetFileName(App.ReportPath, MainWindow.DataType.None, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
+                                file = System.IO.Path.GetDirectoryName(file) + "\\" + MainWindow.Setting.Project.Name + "\\" + System.IO.Path.GetFileNameWithoutExtension(file) + ".png";
+                                bit.Save(file);//默认保存格式为PNG，保存成jpg格式质量不是很好
+                                bit.Dispose();
                                 ImgInfo imgInfo = new ImgInfo();
-                                //imgInfo.ImgPath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory
-                                //    , "./image/a1.jpg");
-                                //imgInfo.Width = 200;
-                                //imgInfo.Height = 200;
-                                //tagInfos[i].AddContent(imgInfo);
+                                imgInfo.ImgPath = file;
+                                imgInfo.Width = Convert.ToInt32(this.Width)/3;
+                                imgInfo.Height = Convert.ToInt32(this.Height)/3;
+                                tagInfos[i].AddContent(imgInfo);
                             }
                         }
                         else
@@ -1082,13 +1304,15 @@ namespace calibration_app
                                             
                                             
                                         }
-                                        table++;
+                                        
                                         
                                     }
+                                    
                                     tblInfo.AddRow(row);
                                 }
+                                table++;
                             }
-
+                            
                         }
                     }
                     string dir = Environment.CurrentDirectory + "\\Report\\" + MainWindow.Setting.Project.Name;
@@ -1108,7 +1332,11 @@ namespace calibration_app
                         Assistance.RemoveAllTmpFile();// 删除所有临时文件
                                                       //Response.Redirect(Request.Url.AbsoluteUri);
                     }
-                    MessageBox.Show("报告导出成功", "完成");
+                    MessageBoxResult res = MessageBox.Show("报告导出成功:存放位置\n\r" + dir + "点击确定打开文件夹", "提示",MessageBoxButton.OKCancel);
+                    if (res == MessageBoxResult.OK)
+                    {
+                        System.Diagnostics.Process.Start("Explorer.exe", dir);
+                    }
                 }
                 catch (Exception exc)
                 {
@@ -1124,7 +1352,7 @@ namespace calibration_app
 
             }
 
+        
 
-           
-        }
+    }
 }

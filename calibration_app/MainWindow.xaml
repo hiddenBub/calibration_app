@@ -15,7 +15,7 @@
                     <!--菜单项为MenuItem，文字使用属性 Header-->
                     <MenuItem Header="开始采集" Name="GatherMenu" Click="GatherMenu_Click"></MenuItem>
                     <MenuItem Header="导入数据" Name="ImportDataMenu" >
-                        <!--<MenuItem Header="导入源数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>-->
+                        <MenuItem Header="拉取标准数据" Name="ImportSourceMenu" Click="ImportSource_Click"></MenuItem>
                         <MenuItem Header="导入场站数据" Name="ImportCalibrationMenu" Click="ImportCalibration_Click"></MenuItem>
                     </MenuItem>
                     <!--<MenuItem Header="关闭" Name="CloseWindowMenu" Click="CloseWindowMenu_Click"></MenuItem>-->
@@ -32,7 +32,7 @@
                 </CheckBox>
                 <Button Name="NewUser" Content="创建新用户" Click="NewUser_Click"></Button>
                 <Menu>
-                        <!--<MenuItem Header="导入源数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>-->
+                    <MenuItem Header="拉取标准数据" Name="ImportSource" Click="ImportSource_Click"></MenuItem>
                     <MenuItem Header="导入场站数据" Name="ImportCalibration" Click="ImportCalibration_Click"></MenuItem>
                 </Menu>
                 <Button Name="SettingBtn" Content="设置" Click="SettingBtn_Click"/>

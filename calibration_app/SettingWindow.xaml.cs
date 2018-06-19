@@ -21,6 +21,7 @@ using LibUsbDotNet.WinUsb;
 using calibration_app.SetOption;
 using Microsoft.Win32;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace calibration_app
 {
@@ -163,6 +164,18 @@ namespace calibration_app
                 MessageBox.Show("项目名称不能为空");
                 return;
             }
+            string proName = TbProName.Text;
+
+
+            foreach (char rInvalidChar in System.IO.Path.GetInvalidFileNameChars())
+            {
+                if (proName.Contains(rInvalidChar.ToString()))
+                {
+                    MessageBox.Show("项目名称包含特殊字符：" + rInvalidChar.ToString());
+                    return;
+                }
+            }
+
 
             if (TbProLng.Text == "" || TbProLat.Text == "")
             {
@@ -170,42 +183,96 @@ namespace calibration_app
                 return;
             }
 
-            if (FileName == null)
+            if (!double.TryParse(TbProLat.Text, out double lat) || !double.TryParse(TbProLng.Text, out double lng))
+            {
+                MessageBox.Show("地理位置数据类型不正确");
+                return;
+            }
+
+            if (FileTextBox.Text == "")
             {
                 MessageBox.Show("必须设置采集源文件路径");
                 return;
             }
 
-            //if (ColumnList[0].Name == null || ColumnList[0].Sensitivity == 0 || ColumnList[0].Frequency == 0)
-            //{
-            //    MessageBox.Show("请设置需校准的数据");
-            //    return;
-            //}
-            // 项目设置
-            Project project = new Project
-            {
-                Name = TbProName.Text,
-                Lng = Convert.ToDouble(TbProLng.Text),
-                Lat = Convert.ToDouble(TbProLat.Text),
-            };
+            string strFileName = FileTextBox.Text;
 
-            // 采集设置
-            Gather gather = new Gather
-            {
-                DataPath = FileName,
-                //ColumnList = ColumnList,
-            };
 
-            // 设置总结点
-            Setting setting = new Setting
+
+            // 判断文件夹存在与否
+            if (!System.IO.Directory.Exists(strFileName))
             {
-                Gather = gather,
-                Project = project
-            };
+                MessageBox.Show("输入的路径不是一个文件夹", "错误");
+                return;
+            }
+            // 文件夹存在则在文件夹下查找SEC级别的数据文件
+            else
+            {
+                try
+                {
+                    string[] files = Directory.GetFiles(strFileName, "*.dat");
+                    foreach (string dat in files)
+                    {
+                        string file = System.IO.Path.GetFileName(dat);
+                        if (file == "CR1000XSeries_GHI_SEC.dat")
+                        {
+                            FileName = dat;
+                            break;
+                        }
+
+                    }
+                    if (FileName == null)
+                    {
+                        new Exception("该文件夹下无可用的dat数据文件");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "错误");
+                    return;
+                }
+
+
+            }
+            // 如果数据文件夹下不存在项目文件夹则新建
+            if (!Directory.Exists(App.DataStoragePath + "\\" + proName))
+                Directory.CreateDirectory(App.DataStoragePath + "\\" + proName);
+            // 如果报告文件夹下不存在项目文件夹则新建
+            if (!Directory.Exists(App.ReportPath + "\\" + proName))
+                Directory.CreateDirectory(App.ReportPath + "\\" + proName);
+            
+            if ((bool)NewProject.IsChecked)
+            {
+                MainWindow.Setting.Project.Name = proName;
+                MainWindow.Setting.Project.Lng = lng;
+                MainWindow.Setting.Project.Lat = lat;
+                MainWindow.Setting.Project.SelectedIndex = MainWindow.Setting.Project.PjList.Count;
+                MainWindow.Setting.Project.PjList.Add(new Pj
+                {
+                    Name = proName,
+                    Lat = lat,
+                    Lng = lng,
+                    Pid = MainWindow.Setting.Project.PjList.Count,
+                });
+            }
+            else if ((bool)ExistedProject.IsChecked)
+            {
+                MainWindow.Setting.Project.Name = ProjectList[ProjectCB.SelectedIndex].Name;
+                MainWindow.Setting.Project.Lng = ProjectList[ProjectCB.SelectedIndex].Lng;
+                MainWindow.Setting.Project.Lat = ProjectList[ProjectCB.SelectedIndex].Lat;
+                MainWindow.Setting.Project.SelectedIndex = ProjectList[ProjectCB.SelectedIndex].Pid;
+            }
+
+
+
+            MainWindow.Setting.Gather.DataPath = FileName;
+                
+
 
 
             // 将设置保存到setting.xml文件
-            SerializeToXml<Setting>("./Setting.xml", setting);
+
+            lib.XmlHelper.SerializeToXml<Setting>("./Setting.xml", MainWindow.Setting);
         }
 
 

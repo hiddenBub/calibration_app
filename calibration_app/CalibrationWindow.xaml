@@ -15,8 +15,8 @@
                 <RowDefinition MaxHeight="40"></RowDefinition>
             </Grid.RowDefinitions>
            
-            <ToolBar Grid.Row="0" MaxHeight="35">
-                <Button Name="ImportCalibration" Content="重新导入" Click="ImportCalibration_Click"></Button>
+            <ToolBar Name="tb" Grid.Row="0" MaxHeight="35">
+                <Button Name="ImportCalibration" Content="重新导入" Click="ImportCalibration_Click" Margin="0,2,0,0" VerticalAlignment="Top"></Button>
                 
                 <Button Name="ExportBtn" Content="导出报告" Click="ExportBtn_Click"></Button>
 
