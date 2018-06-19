@@ -14,8 +14,11 @@ namespace calibration_app
     /// </summary>
     public partial class App : Application
     {
+        // 程序根路径
         public static string RootPath = Environment.CurrentDirectory;
+        // 配置文件路径
         public static string SettingPath = RootPath + "\\Setting.xml";
+        
         public static string DataStoragePath = RootPath + "\\DataStorage";
         public static string ReportPath = RootPath + "\\Report";
         public static string ProgramData = "C:\\ProgramData\\TopFlagTec";
