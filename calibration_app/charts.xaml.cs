@@ -11,17 +11,26 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using LiveCharts.Wpf;
+using LiveCharts;
+using LiveCharts.Defaults;
 
 namespace calibration_app
 {
     /// <summary>
-    /// ProjectSelectWindow.xaml 的交互逻辑
+    /// charts.xaml 的交互逻辑
     /// </summary>
-    public partial class ProjectSelectWindow : Window
+    public partial class charts : Window
     {
-        public ProjectSelectWindow()
+        public charts( )
         {
             InitializeComponent();
+        }
+
+        public charts(CartesianChart cartesianChart)
+        {
+            InitializeComponent();
+            this.ChartZone.Children.Add(cartesianChart);
         }
     }
 }

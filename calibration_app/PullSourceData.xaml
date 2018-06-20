@@ -7,7 +7,8 @@
         xmlns:timeTool="clr-namespace:Loya.Dameer;assembly=Loya.Dameer"
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
-        Title="选择数据时间线" Height="300" Width="400">
+        WindowStartupLocation="CenterScreen"
+        Title="选择数据时间线" Height="300" Width="400" >
     <Grid>
         <DockPanel>
             

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:calibration_app"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="创建用户" Height="300" Width="400" ResizeMode="CanMinimize">
     <Grid>
         <Grid >

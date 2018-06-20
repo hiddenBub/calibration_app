@@ -51,7 +51,7 @@ namespace calibration_app
                     App.AvailableUser = accountDetail[0];
                     this.DialogResult = true;
                 }
-                else this.DialogResult = false;
+                else MessageBox.Show("账号或密码不正确", "警告");
             }
             else
             {

@@ -6,7 +6,7 @@
         xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
         xmlns:local="clr-namespace:calibration_app"
         mc:Ignorable="d"
-        Title="旗云数据校准程序" Height="450" Width="800" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="旗云数据校准程序" Height="450" Width="800" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <DockPanel>
             <!--停靠布局，让菜单栏和工具栏位于窗口顶部-->

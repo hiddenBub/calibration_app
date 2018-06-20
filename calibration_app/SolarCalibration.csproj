@@ -149,6 +149,9 @@
       <DependentUpon>CalibrationWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="CaseVM.cs" />
+    <Compile Include="charts.xaml.cs">
+      <DependentUpon>charts.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CreateUser.xaml.cs">
       <DependentUpon>CreateUser.xaml</DependentUpon>
     </Compile>
@@ -156,9 +159,6 @@
     <Compile Include="lib\IEntitySerialization.cs" />
     <Compile Include="lib\ScreenCapture.cs" />
     <Compile Include="lib\XmlHelper.cs" />
-    <Compile Include="ProjectSelectWindow.xaml.cs">
-      <DependentUpon>ProjectSelectWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="PullSourceData.xaml.cs">
       <DependentUpon>PullSourceData.xaml</DependentUpon>
     </Compile>
@@ -185,6 +185,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="charts.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="CreateUser.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -205,10 +209,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="ProjectSelectWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="PullSourceData.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -845,7 +845,7 @@ namespace calibration_app
            
             // 将校准数据列反转为正常顺序
             CalibrationCollection.Reverse();
-            double minX = 9999;double minY = 9999; double maxX = 0; double maxY = 0;
+            double min = 9999; double max = 0;
 
            
             SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection> (SeriesCollection, new LiveCharts.SeriesCollection { }, 1);
@@ -873,6 +873,7 @@ namespace calibration_app
                     Title = CalibrationCollection[i].Title + "-" + lineSeries.Title,    // 设置集合标题
                     Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
                     PointGeometry = ChartPoint[i+1],             // 取消点的图形标注
+                    StrokeThickness = 2,
                 };
                 int N1 = 0;
                 // 清理点数据
@@ -892,10 +893,10 @@ namespace calibration_app
 
                             // 判断是否包含该点不包含
                             //if (ls.Values.Contains(new ObservablePoint(dataX, dataY))) ls.Values.Add(new ObservablePoint(dataX, dataY));
-                            minX = Math.Min(minX, dataX);
-                            minY = Math.Min(minY, dataY);
-                            maxX = Math.Max(maxX, dataX);
-                            maxY = Math.Max(maxY, dataY);
+                            min = Math.Min(min, dataX);
+                            min = Math.Min(min, dataY);
+                            max = Math.Max(max, dataX);
+                            max = Math.Max(max, dataY);
                         }
                     }
                     else if (deviation > 0.2 || dataX > 1500 ) continue;
@@ -924,17 +925,8 @@ namespace calibration_app
                 MessageBox.Show("场站数据" + string.Join("、",errorMessage.ToArray()) + "无法校准，请重新采集", "警告");
                 return;
             }
-            LineSeries ls = new LineSeries
-            {
-                Title = "基准线",
-                Values = new ChartValues<ObservablePoint> {
-                    new ObservablePoint(minX, minY),
-                    new ObservablePoint(maxX, maxY),
-                },
-                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
-                StrokeThickness = 1,
-            };
-            SeriesCollection[1].Add(ls);
+            
+            
             //ls.Values.Add(minY);
             //ls.Values.Add(maxY);
 
@@ -947,8 +939,8 @@ namespace calibration_app
                 {
                     new LiveCharts.Wpf.Axis{
                         Title = "场站数据，W/m²",
-                        MinValue = minY - 100,
-                        MaxValue = maxY + 100,
+                        MinValue = min - 100,
+                        MaxValue = max + 100,
                     }
                 },
                 AxisX = new AxesCollection
@@ -956,8 +948,8 @@ namespace calibration_app
                     new LiveCharts.Wpf.Axis
                     {
                         Title = "标准数据，W/m²",
-                        MinValue = minX - 100,
-                        MaxValue = maxX + 100,
+                        MinValue = min - 100,
+                        MaxValue = max + 100,
 
                     }
                 },
@@ -965,6 +957,20 @@ namespace calibration_app
                 DisableAnimations = true,
                 
             };
+            
+            LineSeries ls = new LineSeries
+            {
+                Title = "基准线",
+                Values = new ChartValues<ObservablePoint> {
+                    new ObservablePoint(min - 100, min - 100),
+                    new ObservablePoint(max + 100, max + 100),
+                },
+                PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                Stroke = System.Windows.Media.Brushes.Black,
+                Fill = System.Windows.Media.Brushes.Transparent,
+                StrokeThickness = 5,
+            };
+            cartesian.Series.Add(ls);
             this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian,1);
 
 
@@ -982,13 +988,15 @@ namespace calibration_app
             {
                 if (ChartZone.Children.Count > 2) ChartZone.Children.RemoveAt(2);
                 ObservableCollection<SetOption.Column> columnList = MainWindow.Setting.Gather.ColumnList;
+                
                 LiveCharts.SeriesCollection calibrated = SeriesCollection[1];
                 ColumnList.Clear();
                 int index = 0;
                 SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection>(SeriesCollection, new LiveCharts.SeriesCollection(), 2);
                 
-                foreach (ScatterSeries scatter in calibrated)
+                for (int scai = 0;scai < calibrated.Count - 1;scai++)
                 {
+                    
                     // 偏差和
                     double sum = 0;
                     // 绝对偏差和
@@ -997,14 +1005,15 @@ namespace calibration_app
                     double senSum = 0;
                     ScatterSeries ss = new ScatterSeries
                     {
-                        Title = scatter.Title,    // 设置集合标题
+                        Title = calibrated[scai].Title,    // 设置集合标题
                         Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
                         PointGeometry = ChartPoint[index + 1],             // 取消点的图形标注
+                        StrokeThickness = 2,
                     };
                     // 遍历数组求得数据和
-                    for (int i = 0; i < scatter.Values.Count; i++)
+                    for (int i = 0; i < calibrated[scai].Values.Count; i++)
                     {
-                        ObservablePoint op = (ObservablePoint)scatter.Values[i];
+                        ObservablePoint op = (ObservablePoint)calibrated[scai].Values[i];
                         // 标准数据
                         double STDv = op.X;
                         // 场站数据
@@ -1021,14 +1030,18 @@ namespace calibration_app
                         Name = columnList[index].Name,
                         Frequency = columnList[index].Frequency,
                         OldSensitivity = columnList[index].Sensitivity,
-                        NewSensitivity = Math.Round(senSum / scatter.Values.Count, 6),
-                        OldAverageDeviation = Math.Round(sum / scatter.Values.Count, 6),
-                        OldAverageAbsoluteDeviation = Math.Round(absSum / scatter.Values.Count, 6),
+                        NewSensitivity = Math.Round(senSum / calibrated[scai].Values.Count, 6),
+                        OldAverageDeviation = Math.Round(sum / calibrated[scai].Values.Count, 6),
+                        OldAverageAbsoluteDeviation = Math.Round(absSum / calibrated[scai].Values.Count, 6),
                     });
                     SeriesCollection[2].Add(ss);
                     index++;
                 }
-                for (int si = 0; si < SeriesCollection[1].Count; si++)
+                double min = CartesianChart[1].AxisX[0].MinValue;
+                
+                double max = CartesianChart[1].AxisX[0].MaxValue;
+                
+                for (int si = 0; si < SeriesCollection[1].Count - 1; si++)
                 {
                     // 偏差和
                     double sum = 0;
@@ -1044,8 +1057,11 @@ namespace calibration_app
                         double STTv = op.Y * fix;
 
                         
+                        min = Math.Min(min, STTv);
                         
-                        SeriesCollection[2][si].Values.Add(new ObservablePoint(op.X, op.Y * fix) );
+                        max = Math.Max(max, STTv);
+
+                        SeriesCollection[2][si].Values.Add(new ObservablePoint(STDv, STTv) );
                         sum += (STTv - STDv) / STDv;
                         absSum += Math.Abs(STTv - STDv) / STDv;
                     }
@@ -1053,10 +1069,7 @@ namespace calibration_app
                     ColumnList[si].NewAverageAbsoluteDeviation = Math.Round(absSum / SeriesCollection[1][si].Values.Count, 6);
                    
                 }
-                double minX = CartesianChart[1].AxisX[0].MinValue;
-                double minY = CartesianChart[1].AxisY[0].MinValue;
-                double maxX = CartesianChart[1].AxisX[0].MaxValue;
-                double maxY = CartesianChart[1].AxisY[0].MaxValue;
+               
                 CartesianChart cartesian = new CartesianChart
                 {
                     Series = SeriesCollection[2],
@@ -1065,22 +1078,35 @@ namespace calibration_app
                 {
                     new LiveCharts.Wpf.Axis{
                         Title = "场站数据，W/m²",
-                        MinValue = minY,
-                        MaxValue = maxY,
+                        MinValue = min,
+                        MaxValue = max,
                     }
                 },
                     AxisX = new AxesCollection
                 {
                     new LiveCharts.Wpf.Axis{
                         Title = "标准数据，W/m²",
-                        MinValue = minX,
-                        MaxValue = maxX,
+                        MinValue = min,
+                        MaxValue = max,
                     }
                 },
                     Hoverable = false,
                     DisableAnimations = true,
                     //DataTooltip = null
                 };
+                LineSeries ls = new LineSeries
+                {
+                    Title = "基准线",
+                    Values = new ChartValues<ObservablePoint> {
+                    new ObservablePoint(min - 100, min - 100),
+                    new ObservablePoint(max + 100, max + 100),
+                },
+                    PointGeometry = DefaultGeometries.None,             // 取消点的图形标注
+                    Stroke = System.Windows.Media.Brushes.Black,
+                    Fill = System.Windows.Media.Brushes.Transparent,
+                    StrokeThickness = 5,
+                };
+                cartesian.Series.Add(ls);
                 this.CartesianChart = MainWindow.AddItem<CartesianChart>(CartesianChart, cartesian, 2);
 
 
