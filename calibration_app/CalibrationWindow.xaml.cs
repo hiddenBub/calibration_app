@@ -1350,6 +1350,23 @@ namespace calibration_app
                     {
                         Directory.CreateDirectory(dir);
                     }
+                    // 导出数据
+                    for(int start = 1; start< SeriesCollection.Count;start++)
+                    {
+                        string firstLine = "TimeStamp,";
+                        for (int subStart = 0;subStart < SeriesCollection[start].Count;subStart++)
+                        {
+                            string title = SeriesCollection[start][subStart].Title;
+                            firstLine += title.Replace("-", ",") + "," + title + "_Avg,";
+                        }
+                        firstLine = firstLine.TrimEnd(',') + Environment.NewLine;
+                        StreamWriter streamWriter = new StreamWriter(dir + "\\")
+                        if(start == 1)
+                        {
+                            string csvFile = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + "校准前数据.csv";
+
+                        }
+                    }
                     string outPutPath = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + ".docx";
                     if (!string.IsNullOrEmpty(outPutPath))
                     {
