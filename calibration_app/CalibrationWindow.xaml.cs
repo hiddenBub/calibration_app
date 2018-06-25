@@ -849,6 +849,7 @@ namespace calibration_app
 
            
             SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection> (SeriesCollection, new LiveCharts.SeriesCollection { }, 1);
+            Labels = MainWindow.AddItem<List<string>> (Labels, new List<string> { }, 1);
             
             List<string> errorMessage = new List<string>();
             // 遍历数据
@@ -870,7 +871,7 @@ namespace calibration_app
                 
                 ScatterSeries ss = new ScatterSeries
                 {
-                    Title = CalibrationCollection[i].Title + "-" + lineSeries.Title,    // 设置集合标题
+                    Title = lineSeries.Title + "-" + CalibrationCollection[i].Title,    // 设置集合标题
                     Values = new ChartValues<ObservablePoint> { },                      // 初始化数据集
                     PointGeometry = ChartPoint[i+1],             // 取消点的图形标注
                     StrokeThickness = 2,
@@ -890,7 +891,9 @@ namespace calibration_app
                         {
                             // 将符合条件的点添加至
                             ss.Values.Add(new ObservablePoint(dataX, dataY));
-
+                            // 添加时间戳
+                            Labels[1].Add(Labels[0][index]);
+                           
                             // 判断是否包含该点不包含
                             //if (ls.Values.Contains(new ObservablePoint(dataX, dataY))) ls.Values.Add(new ObservablePoint(dataX, dataY));
                             min = Math.Min(min, dataX);
@@ -986,14 +989,18 @@ namespace calibration_app
         {
             if (ChartZone.Children.Count > 1)
             {
-                if (ChartZone.Children.Count > 2) ChartZone.Children.RemoveAt(2);
+                if (ChartZone.Children.Count > 2)
+                {
+                    ChartZone.Children.RemoveAt(2);
+
+                }
                 ObservableCollection<SetOption.Column> columnList = MainWindow.Setting.Gather.ColumnList;
                 
                 LiveCharts.SeriesCollection calibrated = SeriesCollection[1];
                 ColumnList.Clear();
                 int index = 0;
                 SeriesCollection = MainWindow.AddItem<LiveCharts.SeriesCollection>(SeriesCollection, new LiveCharts.SeriesCollection(), 2);
-                
+                Labels = MainWindow.AddItem<List<string>>(Labels, new List<string>(),2);
                 for (int scai = 0;scai < calibrated.Count - 1;scai++)
                 {
                     
@@ -1062,6 +1069,9 @@ namespace calibration_app
                         max = Math.Max(max, STTv);
 
                         SeriesCollection[2][si].Values.Add(new ObservablePoint(STDv, STTv) );
+                        
+                            Labels[2].Add(Labels[1][sik]);
+                        
                         sum += (STTv - STDv) / STDv;
                         absSum += Math.Abs(STTv - STDv) / STDv;
                     }
@@ -1353,19 +1363,55 @@ namespace calibration_app
                     // 导出数据
                     for(int start = 1; start< SeriesCollection.Count;start++)
                     {
-                        string firstLine = "TimeStamp,";
-                        for (int subStart = 0;subStart < SeriesCollection[start].Count;subStart++)
+                        string firstLine = "\"TimeStamp\",";
+                        int SeriesIndex = 0;
+                        for (int subStart = 0;subStart < SeriesCollection[start].Count - 1;subStart++)
                         {
+                            SeriesIndex = Math.Max(SeriesIndex, SeriesCollection[start][subStart].Values.Count);
                             string title = SeriesCollection[start][subStart].Title;
-                            firstLine += title.Replace("-", ",") + "," + title + "_Avg,";
+                            firstLine += "\"" + title.Replace("-", "\",\"") + "\",\"" + title + "_Deviation\",";
                         }
+                        firstLine = firstLine.Trim();
                         firstLine = firstLine.TrimEnd(',') + Environment.NewLine;
-                        StreamWriter streamWriter = new StreamWriter(dir + "\\")
-                        if(start == 1)
+                        string csvFile = string.Empty;
+                        if (start == 1)
                         {
-                            string csvFile = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + "校准前数据.csv";
-
+                            csvFile = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + "校准前数据.csv";
                         }
+                        else 
+                        if(start == 2)
+                        {
+                            csvFile = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + "校准后数据.csv";
+                        }
+                        // 打开流写入对象开始写入
+                        FileStream fs = new FileStream(csvFile, FileMode.Create, FileAccess.Write);//初始化文件流
+                        byte[] array = Encoding.UTF8.GetBytes(firstLine);//给字节数组赋值
+                        fs.Write(array, 0, array.Length);//将字节数组写入文件流
+                        // 获取当前
+
+                        for (int dataIndex = 0; dataIndex < SeriesIndex; dataIndex++)
+                        {
+                            //if (SeriesIndex > 0) SeriesIndex = 0;
+                            string line = "\"" + Labels[start][dataIndex] + "\",";
+                            for (int lineIndex = 0; lineIndex < SeriesCollection[start].Count - 1; lineIndex++)
+                            {
+                                if (dataIndex < SeriesCollection[start][lineIndex].Values.Count)
+                                {
+                                    ObservablePoint op = (ObservablePoint)SeriesCollection[start][lineIndex].Values[dataIndex];
+                                    double deviation = Math.Round((op.Y - op.X) / op.X, 6) * 100;
+                                    line += op.X + "," + op.Y + "," + deviation + "%,";
+                                }
+
+
+                            }
+                            line = line.TrimEnd(',') + Environment.NewLine;
+                            array = Encoding.UTF8.GetBytes(line);//给字节数组赋值
+                            fs.Write(array, 0, array.Length);//将字节数组写入文件流
+                        }
+                        fs.Close();//关闭流
+
+
+
                     }
                     string outPutPath = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + ".docx";
                     if (!string.IsNullOrEmpty(outPutPath))
