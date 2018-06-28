@@ -16,12 +16,20 @@ namespace calibration_app
     {
         // 程序根路径
         public static string RootPath = Environment.CurrentDirectory;
+        // 程序数据路径
+        public static string ProgramData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\TopFlagTec\\SolarCalibration";
+        // 文档路径
+        public static string DocumentPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\Solar Calibration";
+
         // 配置文件路径
-        public static string SettingPath = RootPath + "\\Setting.xml";
+        public static string SettingPath = ProgramData + "\\Setting.xml";
+        // 采集指针路径
+        public static string GatherPath = ProgramData + "\\Gather.txt";
+        // 数据存储路径
+        public static string DataStoragePath = DocumentPath + "\\DataStorage";
+        // 报告路径
+        public static string ReportPath = DocumentPath + "\\Report";
         
-        public static string DataStoragePath = RootPath + "\\DataStorage";
-        public static string ReportPath = RootPath + "\\Report";
-        public static string ProgramData = "C:\\ProgramData\\TopFlagTec";
         public static string AvailableUser = string.Empty;
         public static bool IsFirst()
         {

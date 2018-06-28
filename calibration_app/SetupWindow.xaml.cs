@@ -200,12 +200,12 @@ namespace calibration_app
                     }
                 }
             };
-            
 
+            if (!Directory.Exists(App.ProgramData)) Directory.CreateDirectory(App.ProgramData);
 
             // 将设置保存到setting.xml文件
             
-            XmlHelper.SerializeToXml<Setting>("./Setting.xml", setting);
+            XmlHelper.SerializeToXml<Setting>(App.SettingPath, setting);
 
             // 操作完成后设置返回数据并关闭窗口
             this.DialogResult = true;

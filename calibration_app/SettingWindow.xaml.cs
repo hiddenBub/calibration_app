@@ -272,7 +272,7 @@ namespace calibration_app
 
             // 将设置保存到setting.xml文件
 
-            lib.XmlHelper.SerializeToXml<Setting>("./Setting.xml", MainWindow.Setting);
+            lib.XmlHelper.SerializeToXml<Setting>(App.SettingPath, MainWindow.Setting);
         }
 
 

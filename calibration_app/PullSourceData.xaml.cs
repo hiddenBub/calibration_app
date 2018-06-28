@@ -62,12 +62,11 @@ namespace calibration_app
         {
             try
             {
-                string gather = App.RootPath + "\\Gather.txt";
-                if (File.Exists(gather))
+                if (File.Exists(App.GatherPath))
                 {
-                    File.Delete(gather);
+                    File.Delete(App.GatherPath);
                 }
-                StreamWriter sw = new StreamWriter(App.RootPath + "\\Gather.txt", true);
+                StreamWriter sw = new StreamWriter(App.GatherPath, true);
                 if (StartTime.Value != null)
                 {
                     MainWindow.GatherTimer[0] = StartTime.Value;

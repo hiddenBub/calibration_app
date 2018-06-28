@@ -159,16 +159,16 @@ namespace calibration_app
                 Setting = lib.XmlHelper.DeserializeFromXml<Setting>(App.SettingPath);
                 DataStorage = App.DataStoragePath + "\\" + Setting.Project.PjList[Setting.Project.SelectedIndex].Name;
 
-                string filePath = "./Gather.txt";
+                
 
                 // 初始化chartZone的Grid控件
                 AddCell(2, 2);
 
 
-                if (File.Exists(filePath))
+                if (File.Exists(App.GatherPath))
                 {
                     // 读取gather.txt文件获取起始和结束采集时间
-                    StreamReader sr = new StreamReader(filePath, Encoding.UTF8);
+                    StreamReader sr = new StreamReader(App.GatherPath, Encoding.UTF8);
 
                     // 读取第一行
                     string first = sr.ReadLine();
@@ -447,7 +447,7 @@ namespace calibration_app
                     GatherTimer[0] = now;
 
 
-                    StreamWriter sw = new StreamWriter(@".\Gather.txt", false);
+                    StreamWriter sw = new StreamWriter(App.GatherPath, false);
                     //开始写入
                     sw.WriteLine(timeStamp);
                     //清空缓冲区、关闭流
@@ -494,7 +494,7 @@ namespace calibration_app
                     //DateTime now = DateTime.Now;
                     //string timeStamp = DateFormat(now, "yyyy-MM-dd HH:mm:ss");
                     GatherTimer[1] = now;
-                    FileStream fs = new FileStream(@".\Gather.txt", FileMode.Append);
+                    FileStream fs = new FileStream(App.GatherPath, FileMode.Append);
 
                     //获得字节数组
                     byte[] data = Encoding.UTF8.GetBytes(timeStamp);

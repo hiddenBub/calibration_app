@@ -43,6 +43,11 @@ namespace calibration_app
                 MessageBox.Show("用户名不能为空", "提示");
                 return;
             }
+            if (UserNameTB.Text.Trim() == "topflag")
+            {
+                MessageBox.Show("用户已存在，请更换用户名", "提示");
+                return;
+            }
             if (System.IO.File.Exists(App.ProgramData + "\\password.txt"))
             {
                string[] accounts =  File.ReadAllLines(App.ProgramData + "\\password.txt", Encoding.Default);
