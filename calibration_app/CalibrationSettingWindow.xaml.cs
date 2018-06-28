@@ -36,7 +36,7 @@ namespace calibration_app
             try
             {
                 InitializeComponent();
-                Setting = DeserializeFromXml<Setting>(@".\Setting.xml");
+                Setting = DeserializeFromXml<Setting>(App.SettingPath);
 
                 string fileSource = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.SourceData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
                 string fileCalibration = MainWindow.GetFileName(MainWindow.DataStorage, MainWindow.DataType.CalibrationData, (DateTime)MainWindow.GatherTimer[0], MainWindow.GatherTimer[1]);
@@ -138,8 +138,7 @@ namespace calibration_app
         {
             Setting.Gather.ColumnList = ColumnList;
             MainWindow.Setting.Gather.ColumnList = ColumnList;
-            string settingPath = @"./Setting.xml";
-            SerializeToXml(settingPath, Setting);
+            SerializeToXml(App.SettingPath, Setting);
             this.DialogResult = true;
         }
 

@@ -1143,7 +1143,7 @@ namespace calibration_app
             {
                 try
                 {
-                    string templatePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, MubanFile);
+                    string templatePath = App.DocumentPath + "\\"+ MubanFile;
                     WordMLHelper wordMLHelper = new WordMLHelper();
                     List<TagInfo> tagInfos = wordMLHelper.GetAllTagInfo(File.OpenRead(templatePath));
                     int table = 1;
@@ -1355,7 +1355,7 @@ namespace calibration_app
                             
                         }
                     }
-                    string dir = Environment.CurrentDirectory + "\\Report\\" + MainWindow.Setting.Project.Name;
+                    string dir = App.ReportPath+ "\\" + MainWindow.Setting.Project.Name;
                     if (!Directory.Exists(dir))
                     {
                         Directory.CreateDirectory(dir);
@@ -1416,8 +1416,7 @@ namespace calibration_app
                     string outPutPath = dir + "\\" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[0]) + "_" + MainWindow.DateFormat((DateTime)MainWindow.GatherTimer[1]) + ".docx";
                     if (!string.IsNullOrEmpty(outPutPath))
                     {
-                        templatePath = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory
-                           , mubanFile);
+                        templatePath = App.DocumentPath + "\\" + MubanFile;
                         wordMLHelper.GenerateWordDocument(File.OpenRead(templatePath)
                             , outPutPath
                             , tagInfos);
@@ -1425,7 +1424,7 @@ namespace calibration_app
                         Assistance.RemoveAllTmpFile();// 删除所有临时文件
                                                       //Response.Redirect(Request.Url.AbsoluteUri);
                     }
-                    MessageBoxResult res = MessageBox.Show("报告导出成功:存放位置\n\r" + dir + "点击确定打开文件夹", "提示",MessageBoxButton.OKCancel);
+                    MessageBoxResult res = MessageBox.Show("报告导出成功:存放位置\n\r" + dir + "\n\r点击确定打开文件夹", "提示",MessageBoxButton.OKCancel);
                     if (res == MessageBoxResult.OK)
                     {
                         System.Diagnostics.Process.Start("Explorer.exe", dir);
