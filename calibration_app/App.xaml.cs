@@ -72,6 +72,11 @@ namespace calibration_app
             {
                 this.Shutdown();
             }
+            // 初始化文件夹
+            if (!System.IO.Directory.Exists(ProgramData)) System.IO.Directory.CreateDirectory(ProgramData);
+            if (!System.IO.Directory.Exists(DocumentPath)) System.IO.Directory.CreateDirectory(DocumentPath);
+            if (!System.IO.Directory.Exists(DataStoragePath)) System.IO.Directory.CreateDirectory(DocumentPath);
+            if (!System.IO.Directory.Exists(ReportPath)) System.IO.Directory.CreateDirectory(DocumentPath);
         }
     }
 }

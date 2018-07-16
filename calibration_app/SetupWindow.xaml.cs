@@ -144,8 +144,7 @@ namespace calibration_app
             // 文件夹存在则在文件夹下查找SEC级别的数据文件
             else
             {
-                try
-                {
+                
                     string[] files = Directory.GetFiles(strFileName, "*.dat");
                     foreach (string dat in files)
                     {
@@ -159,17 +158,18 @@ namespace calibration_app
                     }
                     if (FileName == null)
                     {
-                        new Exception("该文件夹下无可用的dat数据文件");
+                        MessageBox.Show("该文件夹下无可用的dat数据文件", "错误");
+                        return;
                     }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "错误");
-                    return;
-                }
+                
                 
                 
             }
+            // 初始化文件夹
+            if (!System.IO.Directory.Exists(App.ProgramData)) System.IO.Directory.CreateDirectory(App.ProgramData);
+            if (!System.IO.Directory.Exists(App.DocumentPath)) System.IO.Directory.CreateDirectory(App.DocumentPath);
+            if (!System.IO.Directory.Exists(App.DataStoragePath)) System.IO.Directory.CreateDirectory(App.DocumentPath);
+            if (!System.IO.Directory.Exists(App.ReportPath)) System.IO.Directory.CreateDirectory(App.DocumentPath);
             // 如果数据文件夹下不存在项目文件夹则新建
             if (!Directory.Exists(App.DataStoragePath + "\\" + proName))
                 Directory.CreateDirectory(App.DataStoragePath + "\\" + proName);
