@@ -528,76 +528,17 @@ namespace calibration_app
 
 
 
-
-        
-
-        
-
         private void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
             DateTime beforDT = DateTime.Now;
-            //string dataPath = setting.Gather.DataPath;
-            //FileStream sr = new FileStream(dataPath, FileMode.Open, FileAccess.Read);
-            //StringBuilder s = new StringBuilder();
-            //long pos = sr.Length;
-            //pos = InverseReadRow(sr, pos,ref s);
-
-            
-            
+          
             DateTime time = ChartStartFormat(DateTime.Now, 5);
             DateTime afterDT = DateTime.Now;
             TimeSpan ts = afterDT.Subtract(beforDT);
             MessageBox.Show("DateTime总共花费"+ ts.TotalMilliseconds + "ms.");
 
-            //Bitmap bit = new Bitmap(Convert.ToInt32(this.ChartZone.Width), Convert.ToInt32(this.ChartZone.Height));//实例化一个和窗体一样大的bitmap
-            //Graphics g = Graphics.FromImage(bit);
-            //g.CompositingQuality = CompositingQuality.HighQuality;//质量设为最高
-            //g.CopyFromScreen(Convert.ToInt32(this.Left), Convert.ToInt32(this.Top), 0, 0, new System.Drawing.Size(Convert.ToInt32(this.ChartZone.Width), Convert.ToInt32(this.ChartZone.Height)));//保存整个窗体为图片
-            ////g.CopyFromScreen(panel游戏区 .PointToScreen(Point.Empty), Point.Empty, panel游戏区.Size);//只保存某个控件（这里是panel游戏区）
-            //bit.Save("weiboTemp.png");//默认保存格式为PNG，保存成jpg格式质量不是很好
         }
-
         
-
-        /// <summary>
-        /// 切换选项卡后的逻辑
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        //private void ColTab_Change(object sender, SelectionChangedEventArgs e)
-        //{
-        //    // 判断当前是否是首次进入页面，主要用于屏蔽一些bug
-        //    if (!first)
-        //    {
-        //        // 设置索引初始值
-        //        int i = 0;
-        //        // 遍历选项卡数据(初始化原始选项卡标签)
-        //        foreach (TabItem it in ColTab.Items)
-        //        {
-        //            // 将当前选项卡的对象存至item变量中
-        //            var item = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.Items[i]) as TabItem;
-        //            // 取得当前选项卡的显示标题
-        //            string header = item.Header.ToString();
-        //            // 将header分割成数组
-        //            string[] headers = header.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
-        //            // 取得只需显示的部分
-        //            item.Header = headers[0];
-        //            // 将选项卡里的内容移除，用作数据表grid单例构造
-        //            item.Content = null;
-        //            // 更新索引
-        //            i++;
-        //        }
-        //        // 取得当前操作的选项卡并将该对象存至temp变量中
-        //        var temp = ColTab.ItemContainerGenerator.ContainerFromItem(ColTab.SelectedItem) as TabItem;
-        //        optionIndex = ColTab.SelectedIndex;
-        //        // 以可显示的方式展示被选中选项卡
-        //        temp.Header += "-selected";
-        //        // 将图表grid存放至选项卡中
-        //        temp.Content = ChartZone;
-        //    }
-
-        //}
-
         /// <summary>
         /// 定时器回调函数
         /// </summary>
@@ -661,20 +602,6 @@ namespace calibration_app
                 }
                 fs.Close();
                 
-                    //for (int k = 0;k < a.Count;k++)
-                    //{
-                    //    string con = a[k] + "|";
-                    //    if (DataTemp.Count > 0) con += DataTemp[0].Count + "-";
-                    //    Console.WriteLine(con + dateTime.Second);
-                    //}
-                    
-                
-                //Console.WriteLine("X轴时间戳:"+lastTimeStamp+",现在取得的时间:"+datas[0]+",样本数量:"+a.Count);
-                //if (DataTemp.Count > 0)
-                //{
-                //    Console.WriteLine("待更新数据数量:" + DataTemp[0].Count);
-                //}
-
                 for (int i = 0; i < a.Count; i++)
                 {
                     datas = a[i].Split(sp, StringSplitOptions.RemoveEmptyEntries);
@@ -684,14 +611,10 @@ namespace calibration_app
                     Console.WriteLine(con + dateTime.Second );
                     string[] split = datas[0].Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     string date = split[0];
-                    //DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
-                    //DateTime latest = Convert.ToDateTime(date + " 19:00:00");
-                    //if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
-                    //if (GatherTimer.Count == 2 && (DateTime.Compare(Convert.ToDateTime(GatherTimer[1]), Convert.ToDateTime(datas[0])) < 0)) return;
-
-                    //// 获取当前选择选项卡的数据模型
-                    //Column column = Setting.Gather.ColumnList[optionIndex];
-
+                    DateTime earlist = Convert.ToDateTime(date + " 05:00:00");
+                    DateTime latest = Convert.ToDateTime(date + " 19:00:00");
+                    if (DateTime.Compare(Convert.ToDateTime(datas[0]), earlist) < 0 || DateTime.Compare(Convert.ToDateTime(datas[0]), latest) > 0) return;
+                    
                     // 当前数据中的时间与X轴的计量点中坐标轴时间较大时
                     if (DateTime.Compare(Convert.ToDateTime(datas[0]), Convert.ToDateTime(lastTimeStamp)) <= 0)
                     {
@@ -777,7 +700,7 @@ namespace calibration_app
         /// <param name="time"></param>
         /// <param name="format"></param>
         /// <returns></returns>
-        public static string DateFormat (DateTime time,string format = "yyyy-MM-dd HH：mm：ss")
+        public static string DateFormat(DateTime time, string format = "yyyy-MM-dd HH：mm：ss")
         {
             return time.ToString(format);
         }
@@ -1334,6 +1257,38 @@ namespace calibration_app
         {
             CreateUser cu = new CreateUser();
             cu.ShowDialog();
+        }
+
+        /// <summary>
+        /// 帮助按钮的输出逻辑
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MenuHelp_Click(object sender, RoutedEventArgs e)
+        {
+            string enter = "\r\n";
+            string des = "当前版本：" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + enter +
+                "   本软甲旨在校准旗云辐射标准站及场站辐射表，并提供相应的校准报告。" + enter +
+                "   *使用本软件前请先使用LoggerNet的SetUp工具创建标准站采集器，并确保连通采集设备" + enter +
+                "在校准前需要对标准站进行校时以避免数据因为时间偏差产生的误差，并且放置标准站传感器" + enter +
+                "时要选择不会被场站设备遮挡的同设备朝向、相同倾斜角度的采集位置。" + enter +
+                "   *本软件初以上需求外，完成校准过程还需要：场站辐射传感器数据、场站辐射传感器灵敏度、" + enter +
+                "报告模板、采集程序密码(校准后更改辐射传感器灵敏度)。" + enter +
+                "功能说明：" + enter +
+                "   (1) “开始采集”按钮可以直接收取标准站数据并显示在主采集窗口中，" + enter +
+                "并点击“结束采集”按钮结束本次采集。" + enter +
+                "   (2) “拉取标准数据”按钮可以在采集箱采集数据结束后连通采集箱，" + enter +
+                "从采集箱中拉取数据，期间不需要电脑连通采集箱。" + enter +
+                "   (3) “导入场站数据”按钮可以在标准数据拉取完并制作好场站数据后" + enter +
+                "将场站数据导入至程序中进行比对分析。" + enter +
+                //"(4) 点击\"导出数据\"导出本次采集数据，导出数据只能在结束采集后使用\r\n" +
+                "如有疑问请联系：wangwei@topflagtec.com 王玮" + enter + enter +
+                "北京旗云创科科技有限责任公司" + enter +
+                "BEIJING TOP FLAG TECHNOLOGY CO., LTD" + enter +
+                "地址：北京市海淀区中关村南三街6号中科资源大厦（100080）" + enter +
+                "电话：010 - 6142 - 6159，传真：010 - 6072 - 0351" + enter +
+                "网址：www.topflagtec.com";
+            MessageBox.Show(des, "帮助", MessageBoxButton.OK);
         }
     }
 }

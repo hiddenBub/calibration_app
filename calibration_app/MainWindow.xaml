@@ -24,7 +24,7 @@
                     <MenuItem Header="设置" Name="SettingMenu" Click="SettingMenu_Click"></MenuItem>
                 </MenuItem>
                 <!--<MenuItem Header="View"></MenuItem>-->
-                <!--<MenuItem Header="About"></MenuItem>-->
+                <MenuItem Header="帮助" Name="MenuHelp" Click="MenuHelp_Click"></MenuItem>
             </Menu>
             <ToolBar DockPanel.Dock="Top">
                 <!--ToolBar和StatusBar就是一个容器-->
