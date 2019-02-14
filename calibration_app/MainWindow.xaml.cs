@@ -1268,7 +1268,7 @@ namespace calibration_app
         {
             string enter = "\r\n";
             string des = "当前版本：" + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + enter +
-                "   本软甲旨在校准旗云辐射标准站及场站辐射表，并提供相应的校准报告。" + enter +
+                "   本软件旨在校准旗云辐射标准站及场站辐射表，并提供相应的校准报告。" + enter +
                 "   *使用本软件前请先使用LoggerNet的SetUp工具创建标准站采集器，并确保连通采集设备" + enter +
                 "在校准前需要对标准站进行校时以避免数据因为时间偏差产生的误差，并且放置标准站传感器" + enter +
                 "时要选择不会被场站设备遮挡的同设备朝向、相同倾斜角度的采集位置。" + enter +
